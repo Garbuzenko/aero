@@ -4,7 +4,7 @@ markdown
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-green.svg)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-12+-blue.svg)
-![React](https://img.shields.io/badge/React-17+-61dafb.svg)
+
 
 Система для анализа количества и длительности полетов гражданских беспилотников в регионах Российской Федерации на основе данных Росавиации.
 
