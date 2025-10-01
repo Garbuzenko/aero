@@ -1,0 +1,1 @@
+<script src="<?=DOMAIN;?>/lib/js/jsmyselect/select.min.js"></script>

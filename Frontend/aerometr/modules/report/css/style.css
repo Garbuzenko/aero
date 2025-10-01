@@ -1,0 +1,179 @@
+.reportScreenshotTitle {
+    position: relative;
+    top: 0;
+    left: 0;
+    margin-bottom: 20px;
+    width: 100%;
+    background: #060818;
+    padding: 20px;
+    color: #fff;
+    text-align: center;
+    font-size: 17px;
+    font-weight: bold;
+    border-bottom: 2px solid #333;
+    z-index: 100000000;
+    box-sizing: border-box;
+}
+
+.reportScreenshotProgressModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100000000;
+    font-family: Arial, sans-serif;
+}
+
+.reportScreenshotProgressSubModal {
+    background: #0E1726;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    min-width: 300px;
+}
+
+.reportScreenshotProgressModalTitle {
+    margin-bottom: 20px; 
+    color: #fff;
+}
+
+.reportScreenshotProgressModalContent {
+    width: 100%;
+    height: 20px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.reportScreenshotProgressModalBar {
+     width: 0%;
+     height: 100%;
+     background: linear-gradient(90deg, #4CAF50, #45a049);
+     border-radius: 10px;
+     transition: width 0.3s ease;
+}
+
+.reportScreenshotProgressModalText {
+    color: #fff;
+    font-size: 14px;
+}
+
+.reportScreenshotProgressModalPercent {
+    font-weight: bold;
+    color: #fff;
+    margin-top: 5px;
+}
+
+.reportScreenshotPreviewModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100000000;
+    font-family: Arial, sans-serif;
+}
+
+.reportScreenshotPreviewModalContent {
+    background: #0E1726;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+    max-width: 90%;
+    max-height: 90%;
+    overflow: auto;
+    text-align: center;
+}
+
+.reportScreenshotPreviewModalTitle {
+    margin-bottom: 15px; 
+    color: #fff;
+}
+
+.reportScreenshotPreviewModalImgBox {
+    margin-bottom: 20px;
+    max-height: 60vh;
+    overflow: auto;
+    border: 1px solid #000;
+    border-radius: 5px;
+    padding: 4px;
+    background: #3b3f5c;
+}
+
+.reportScreenshotPreviewModalImg {
+     max-width: 100%;
+     height: auto;
+     display: block;
+}
+
+.reportScreenshotPreviewModalBtnBox {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.reportScreenshotPreviewModalDescr {
+    margin-top: 15px;
+    font-size: 12px;
+    color: #666;
+}
+
+.reportScreenshotErrorModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100000000;
+    font-family: Arial, sans-serif;
+}
+
+.reportScreenshotErrorModalContent {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 400px;
+}
+
+.reportScreenshotErrorModalClose {
+    font-size: 48px; 
+    margin-bottom: 20px;
+}
+
+.reportScreenshotErrorModalTitle {
+    margin-bottom: 15px; 
+    color: #d32f2f;
+}
+
+.reportScreenshotErrorModalMess {
+    color: #666; 
+    margin-bottom: 20px;
+}
+
+.reportScreenshotErrorModalBtn {
+    background: #d32f2f;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}

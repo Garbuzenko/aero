@@ -1,0 +1,36 @@
+div#load_screen {
+    background: rgb(38, 34, 97);
+}
+
+body.dark div#load_screen {
+    background: rgb(38, 34, 97);
+}
+
+div#load_screen .loader-content img {
+  width: 100%;
+}
+
+body.dark div#load_screen .loader-content img {
+  width: 100%;
+}
+
+.myrow {
+    --bs-gutter-x: 1.5rem;
+    --bs-gutter-y: 0;
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: calc(-.5 * 2rem);
+    margin-left: calc(-.5 * 2rem);
+}
+
+body.dark .form-select {
+    color: #888ea8;
+}
+
+body.dark .form-select:focus {
+   color: #888ea8;
+}
+
+body.dark .form-control {
+    color: #888ea8;
+}

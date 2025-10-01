@@ -1,0 +1,6 @@
+.uploadTerminalMainBlock {
+    height: 250px;
+    max-height: 250px;
+    background: #060818;
+    overflow-y: auto;
+}

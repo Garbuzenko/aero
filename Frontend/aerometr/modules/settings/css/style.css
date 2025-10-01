@@ -1,0 +1,14 @@
+.settingsTransparentInput {
+    height: 40px;
+    border: none;
+    background: transparent;
+    padding-left: 15px;
+}
+
+body.dark .table tbody tr td input[type="text"] {
+    color: #888ea8;
+}
+
+.table tbody tr td input[type="text"] {
+    color: #212529;
+}

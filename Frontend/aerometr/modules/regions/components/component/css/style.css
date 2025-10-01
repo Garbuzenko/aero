@@ -1,0 +1,37 @@
+body.dark .widget-four .widget-content .browser-list:nth-child(1) .w-icon {
+    background: #2196f3 !important;
+}
+
+.widget-four .widget-content .browser-list:nth-child(1) .w-icon {
+    background: #4361ee;
+    color: #2196f3 !important;
+}
+
+
+body.dark .widget-four .widget-content .browser-list:nth-child(2) .w-icon {
+    background: #4361ee !important;
+}
+
+.widget-four .widget-content .browser-list:nth-child(2) .w-icon {
+    background: #4361ee;
+}
+
+.widget-four .widget-content .browser-list:nth-child(4) .w-icon {
+    background: #a0a5b9;
+    color: #fff;
+}
+
+body.dark .widget-four .widget-content .browser-list:nth-child(4) .w-icon {
+   background: rgb(59, 63, 92); 
+   color: #fff;
+}
+
+.widget-three .widget-content .summary-list:nth-child(4) .w-icon {
+    background: #a0a5b9;
+    color: #fff;
+}
+
+body.dark .widget-three .widget-content .summary-list:nth-child(4) .w-icon {
+   background: rgb(59, 63, 92); 
+   color: #fff;
+}
