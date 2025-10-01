@@ -1,0 +1,12 @@
+mysql~=0.0.3
+mysql-connector-python~=9.4.0
+requests~=2.32.5
+shapely~=2.1.1
+schedule~=1.2.2
+rtree~=1.4.1
+h3~=3.7.7
+pandas~=2.3.2
+openpyxl~=3.1.5
+beautifulsoup4~=4.13.5
+osm2geojson~=0.2.6
+PyJWT~=2.10.1
