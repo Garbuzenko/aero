@@ -227,7 +227,7 @@
 </div>
 </div>
 <div class="row">
-  <iframe frameborder="0" src="https://datalens.yandex/mq7v22u1faoi7?_no_controls=1&_lang=ru&region_id=<?=$region_id;?>&_theme=dark" width="100%" height="2000px"></iframe>
+  <iframe frameborder="0" src="https://datalens.yandex/hn8abntoo1i42?_no_controls=1&_lang=ru&region_id=<?=$region_id?>&_theme=dark"" width="100%" height="1750px"></iframe>
 </div>
 
 <div class="hidden">

@@ -66,10 +66,10 @@
                                 <a href="<?=DOMAIN;?>/dash-regions">Регионы</a>
                             </li>
                             <li class="<?=$xc['mod_menu']['dash-honeycombs'];?>">
-                                <a href="<?=DOMAIN;?>/dash-honeycombs">Соты</a>
+                                <a href="<?=DOMAIN;?>/dash-honeycombs">Гексагоны</a>
                             </li>
                             <li class="<?=$xc['mod_menu']['flight-density'];?>">
-                                <a href="<?=DOMAIN;?>/flight-density">Время полёта</a>
+                                <a href="<?=DOMAIN;?>/flight-density">Плотность полётов</a>
                             </li>
                             <li class="<?=$xc['mod_menu']['dash-clusterization'];?>">
                                 <a href="<?=DOMAIN;?>/dash-clusterization">Кластеризация</a>
@@ -85,9 +85,7 @@
                             </li>
                         </ul>
                     </li>
-                    
-                    
-                    
+                    <?if($_SESSION['role_id']==1):?>
                     <li class="menu <?=$xc['mod_menu']['reports'];?>">
                         <a href="<?=DOMAIN;?>/reports" aria-expanded="false" class="dropdown-toggle">
                             <div class="">
@@ -96,28 +94,19 @@
                             </div>
                         </a>
                     </li>
-                    <li class="menu">
-                        <a href="#dashboard2" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                    
+                    <li class="menu <?=$xc['mod_menu']['api-info'];?>">
+                        <a href="<?=DOMAIN;?>/api-info" aria-expanded="false" class="dropdown-toggle">
                             <div class="">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                                <span>Экспорт</span>
-                            </div>
-                            <div>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                <span>API</span>
                             </div>
                         </a>
-                        <ul class="collapse submenu list-unstyled" id="dashboard2" data-bs-parent="#accordionExample">
-                            <li class="">
-                                <a href="#">Таблица 1</a>
-                            </li>
-                            <li class="">
-                                <a href="#">Таблица 2</a>
-                            </li>
-                        </ul>
                     </li>
+                    <?endif;?>
                     
-                    <li class="menu">
-                        <a href="#dashboard3" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                    <li class="menu <?=$xc['mod_menu']['gis'];?>">
+                        <a href="#dashboard3" data-bs-toggle="collapse" aria-expanded="<?if(!empty($xc['mod_menu']['gis'])):?>true<?else:?>false<?endif;?>" class="dropdown-toggle">
                             <div class="">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-globe"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
                                 <span>Интеграции</span>
@@ -126,18 +115,21 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right"><polyline points="9 18 15 12 9 6"></polyline></svg>
                             </div>
                         </a>
-                        <ul class="collapse submenu list-unstyled" id="dashboard3" data-bs-parent="#accordionExample">
-                            <li class="">
-                                <a href="#">ERP-системы</a>
+                        <ul class="collapse submenu list-unstyled <?if(!empty($xc['mod_menu']['gis'])):?>show<?endif;?>" id="dashboard3" data-bs-parent="#accordionExample">
+                            <li class="<?=$xc['mod_menu']['overpass'];?>">
+                                <a href="<?=DOMAIN;?>/gis/overpass">Overpass API</a>
                             </li>
-                            <li class="">
-                                <a href="#">GIS-порталы</a>
+                            <li class="<?=$xc['mod_menu']['opensky'];?>">
+                                <a href="<?=DOMAIN;?>/gis/opensky">Opensky API</a>
+                            </li>
+                            <li class="<?=$xc['mod_menu']['skyarc'];?>">
+                                <a href="<?=DOMAIN;?>/gis/skyarc">Skyarc API</a>
                             </li>
                         </ul>
                     </li>
                     
-                    <li class="menu <?=$xc['mod_menu']['docs'];?>">
-                        <a href="<?=DOMAIN;?>/docs" aria-expanded="false" class="dropdown-toggle">
+                    <li class="menu">
+                        <a target="_blank" href="https://docs.google.com/document/d/e/2PACX-1vR-7JGtmZtZA_yZKT9r4vBPS2EDBZcMlgMerFUV4VeQjE2rK8lvc96A1UkUJ8TowRKb92iEtQmFup-S/pub?embedded=true" aria-expanded="false" class="dropdown-toggle">
                             <div class="">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-book"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                                 <span>Документация</span>

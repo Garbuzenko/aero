@@ -34,3 +34,11 @@ body.dark .form-select:focus {
 body.dark .form-control {
     color: #888ea8;
 }
+
+body.dark div.dataTables_wrapper div.dataTables_filter input {
+    width: 250px !important;
+}
+
+div.dataTables_wrapper div.dataTables_filter input {
+    width: 250px !important;
+}

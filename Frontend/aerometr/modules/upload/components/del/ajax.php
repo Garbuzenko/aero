@@ -16,7 +16,9 @@ if (isset($_POST['form_id']) && $_POST['form_id'] == 'form_jsClearFiles') {
         $del = db_query("DELETE FROM `processed_files`","d");
         
         if ($del == true) {
-            exit('');
+            
+            $clearLog = db_query("DELETE FROM log","d");
+            exit('ok');
         }
         
     }

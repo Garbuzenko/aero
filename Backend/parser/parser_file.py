@@ -28,7 +28,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('log.log', encoding='utf-8'),
+        logging.FileHandler('../log.log', encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
@@ -44,6 +44,51 @@ class FlightDataProcessor:
         self.current_filename = None
         self.current_file_progress = 0
         self.total_records_in_file = 0
+
+    def process_unprocessed_files(self):
+        """Обрабатывает только те файлы, которые ещё не помечены как 'processed'."""
+        if not self.connection or not self.connection.is_connected():
+            if not self.connect_to_db():
+                logging.error("Не удалось подключиться к БД для обработки файлов")
+                return
+
+        # Загрузка геоданных (если ещё не загружены)
+        if not self.regions:
+            if not self.load_regions_from_db():
+                logging.error("Не удалось загрузить регионы. Прерывание обработки.")
+                return
+
+        # Получаем список файлов с FTP
+        ftp_files = self.list_ftp_files()
+        for ftp_file in ftp_files:
+            try:
+                if self.is_file_processed(ftp_file):
+                    continue
+
+                self.mark_file_processed(ftp_file, "process")
+                self.current_filename = ftp_file
+                self.current_file_progress = 0
+
+                local_path = f"downloads/{ftp_file}"
+                os.makedirs("downloads", exist_ok=True)
+
+                if not self.download_ftp_file(f"{settings.FTP_CONFIG['remote_dir']}{ftp_file}", local_path):
+                    self.mark_file_processed(ftp_file, "error", "Ошибка загрузки файла")
+                    continue
+
+                data = self.load_data_from_excel(local_path)
+                if data is None:
+                    self.mark_file_processed(ftp_file, "error", "Ошибка загрузки данных")
+                    continue
+
+                self.process_flights(data, limit=None, batch_size=10000)
+                self.mark_file_processed(ftp_file, "processed")
+                self.update_progress(1, 1, f"Файл обработан")
+
+            except Exception as e:
+                error_msg = f"Ошибка обработки файла {ftp_file}: {e}"
+                logging.error(error_msg)
+                self.mark_file_processed(ftp_file, "error", error_msg)
 
     def connect_to_db(self):
         """Установка соединения с базой данных"""
@@ -97,7 +142,7 @@ class FlightDataProcessor:
         self.current_file_progress = progress_percent
 
         # Записываем в лог
-        log_message = f"{stage}: {current}/{total} ({progress_percent}%)"
+        log_message = f"{stage}: ({progress_percent}%)"
         self.write_log(log_message, progress_percent)
 
         # Обновляем поле procent в processed_files
@@ -125,7 +170,8 @@ class FlightDataProcessor:
             files = ftp.nlst()
             ftp.quit()
             xlsx_files = [f for f in files if f.endswith('.xlsx')]
-            logging.info(f"Найдено файлов на FTP: {len(xlsx_files)}")
+            logging.info(f"Найдено не обработанных файлов: {len(xlsx_files)}")
+            self.update_progress(0, 1, f"Найдено не обработанных файлов: {len(xlsx_files)}")
             return xlsx_files
         except Exception as e:
             logging.error(f"Ошибка получения списка файлов с FTP: {e}")
@@ -141,7 +187,8 @@ class FlightDataProcessor:
                 ftp.retrbinary(f"RETR {remote_path}", f.write)
 
             ftp.quit()
-            logging.info(f"Файл успешно загружен с FTP: {remote_path} -> {local_path}")
+            logging.info(f"Файл успешно загружен для обработки: {remote_path} -> {local_path}")
+            self.update_progress(0, 1, f"Файл успешно загружен для обработки: {local_path}")
             return True
         except Exception as e:
             logging.error(f"Ошибка загрузки файла с FTP {remote_path}: {e}")
@@ -234,6 +281,7 @@ class FlightDataProcessor:
                 structure['date_column'] = col
 
         logging.info(f"Структура листа '{sheet_name}': {structure}")
+
         return structure
 
     def load_data_from_excel(self, file_path):
@@ -242,15 +290,16 @@ class FlightDataProcessor:
             # Загружаем книгу Excel
             wb = load_workbook(file_path)
             all_data = []
-
+            f = 0
             for sheet_name in wb.sheetnames:
                 df = pd.read_excel(file_path, sheet_name=sheet_name, engine='openpyxl')
-
+                f = f + 1
                 if df.empty:
                     continue
 
                 # Определяем структуру листа
                 structure = self.detect_sheet_structure(sheet_name, df)
+                self.update_progress(f, len(wb.sheetnames)*10, f"Обработка листа '{sheet_name}'")
                 self.sheet_structures[sheet_name] = structure
 
                 # Добавляем информацию о листе в каждую запись
@@ -992,6 +1041,7 @@ class FlightDataProcessor:
 
             self.total_records_in_file = total_count
             logging.info(f"Всего записей для обработки: {total_count}")
+            self.update_progress(0, total_count, f"Всего записей для обработки: {total_count}")
 
             # Создание таблицы для результатов
             self.create_results_table()
@@ -1006,8 +1056,8 @@ class FlightDataProcessor:
 
                 try:
                     # Обновляем прогресс каждые 10000 записей
-                    if i % 10000 == 0:
-                        self.update_progress(i, total_count, "Обработка записей")
+                    if i % 5000 == 0:
+                        self.update_progress(i, total_count + 1, "Обработка записей")
 
                     # Обрабатываем запись и получаем значения для вставки
                     values = self.process_single_flight(row)
@@ -1192,8 +1242,10 @@ class FlightDataProcessor:
                 }
 
             logging.info("=== СТАТИСТИКА ЗАПОЛНЕННОСТИ ПОЛЕЙ ===")
+            self.update_progress(99, 100, f"СТАТИСТИКА ЗАПОЛНЕННОСТИ ПОЛЕЙ ")
             for field, data in stats.items():
                 logging.info(f"{field}: {data['non_null']}/{total_records} ({data['percentage']:.1f}%) заполнено")
+                self.update_progress(99, 100,f"{field}: {data['non_null']}/{total_records} ({data['percentage']:.1f}%) заполнено")
 
         except Exception as e:
             logging.error(f"Ошибка при получении статистики: {e}")
@@ -1356,61 +1408,9 @@ class FlightDataProcessor:
             logging.info("Соединение с базой данных закрыто")
 
     def process_all_files(self):
+        """Совместимость: просто вызывает обработку непроцессированных файлов."""
+        self.process_unprocessed_files()
 
-
-        """Обработка всех файлов из FTP-директории"""
-        if not self.connect_to_db():
-            return
-
-        # Создаем таблицы для логирования и отслеживания файлов
-        self.create_log_table()
-        self.create_processed_files_table()
-
-        # Загрузка геоданных из базы
-        if not self.load_regions_from_db():
-            logging.error("Не удалось загрузить регионы. Прерывание обработки.")
-            return
-
-        # Получаем список файлов с FTP
-        ftp_files = self.list_ftp_files()
-
-        for ftp_file in ftp_files:
-            try:
-                # Устанавливаем текущий файл и сбрасываем прогресс
-                self.current_filename = ftp_file
-                self.current_file_progress = 0
-
-                # Проверяем, не обработан ли уже файл
-                if self.is_file_processed(ftp_file):
-                    logging.info(f"Файл {ftp_file} уже обработан, пропускаем")
-                    continue
-
-                # Скачиваем файл
-                local_path = f"downloads/{ftp_file}"
-                os.makedirs("../downloads", exist_ok=True)
-
-                if not self.download_ftp_file(f"{settings.FTP_CONFIG['remote_dir']}{ftp_file}", local_path):
-                    self.mark_file_processed(ftp_file, "error", "Ошибка загрузки файла")
-                    continue
-
-                # Загружаем данные из Excel
-                data = self.load_data_from_excel(local_path)
-                if data is None:
-                    self.mark_file_processed(ftp_file, "error", "Ошибка загрузки данных")
-                    continue
-
-                # Обрабатываем данные
-                self.process_flights(data, limit=None, batch_size=10000)
-
-                # Отмечаем файл как обработанный
-                self.mark_file_processed(ftp_file, "processed")
-
-            except Exception as e:
-                error_msg = f"Ошибка обработки файла {ftp_file}: {e}"
-                logging.error(error_msg)
-                self.mark_file_processed(ftp_file, "error", error_msg)
-
-        self.close_connection()
 
 
 def main():

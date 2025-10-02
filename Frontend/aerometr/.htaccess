@@ -44,3 +44,5 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 RewriteRule ^([0-9a-z-]+)$ index.php?mod=$1 [L]
 RewriteRule ^([0-9a-z-]+)/([0-9a-z-]+)$ index.php?mod=$1&com=$2 [L]
 RewriteRule ^([0-9a-z-]+)/([0-9a-z-]+)/([0-9a-z-]+)$ index.php?mod=$1&com=$2&com2=$3 [L]
+
+#RewriteRule ^sitemap.xml$ /sitemap/sitemap.php [L,QSA]

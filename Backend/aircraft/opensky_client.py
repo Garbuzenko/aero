@@ -24,6 +24,7 @@ class OpenSkyClient:
 
         try:
             response = self.session.get(url, params=params, timeout=30)
+            print(url)
 
             if response.status_code == 401:
                 print("Ошибка 401: Попробуем без аутентификации...")

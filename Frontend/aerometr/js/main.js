@@ -62,15 +62,35 @@ function popupWindowFunc(content,title,width,height,zIndex) {
     cl.css({'width':width,'height':height,'z-index':zIndex}).appendTo('body').fadeIn(200).removeClass('hidden').addClass('jsPopupClose');
 }
 
+
+function getThemeColor() {
+  try {
+    var themeSettings = localStorage.getItem('theme');
+    if (themeSettings) {
+      var settings = JSON.parse(themeSettings);   
+      if (settings.settings && settings.settings.layout && settings.settings.layout.darkMode === false) {
+        return '#ecedf0';
+      }
+            }
+  } catch (e) {
+     console.error('Error reading theme settings:', e);
+  }
+   
+  return '#060818';      
+  
+}
+
 function popupWindowBottomFunc(content,title,width,height,zIndex) {
     
     var popupWindow = 'jsPopupWindow';
+    
+    var themeColor = getThemeColor();
     
     var cl = $('#'+popupWindow).clone();
     cl.find('#'+popupWindow+'Title').html(title);
     cl.removeClass('modal').addClass('popupWindowsBottom');
     cl.find('.modal-footer').remove();
-    cl.find('#'+popupWindow+'SubDiv').css({'height':'100vh','background':'#060818'}).html(content);
+    cl.find('#'+popupWindow+'SubDiv').css({'height':'100vh','background':themeColor}).html(content);
     cl.css({'width':width,'height':height, 'bottom': '-' + height,'z-index':zIndex}).appendTo('body').removeClass('hidden');
     cl.show().animate({
         'bottom': '0'

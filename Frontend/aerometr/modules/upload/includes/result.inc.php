@@ -35,7 +35,7 @@
 <form method="post" action="" id="form_jsClearFiles">
   <input type="hidden" name="module" value="upload" />
   <input type="hidden" name="component" value="del" />
-  <input type="hidden" name="ajaxLoad" value="processedFiles" />
+  <input type="hidden" name="initAnyPlugin" value="jsUploadFilesFunc" />
   <input type="hidden" name="ok" value="Файлы удалены" />
   <input type="hidden" name="alert" value="" />
   <button class="send_form btn btn-primary mt-2" data-text="Вы уверены, что хотите удалить все файлы?" id="jsClearFiles">Очистить</button>

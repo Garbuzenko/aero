@@ -2,8 +2,6 @@ import time
 import jwt
 import json
 from settings import private_key
-# private_key = private_key
-
 
 now = int(time.time())
 payload = {

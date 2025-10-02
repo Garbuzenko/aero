@@ -1,0 +1,1 @@
+<script src="<?=$xc['tmp_url'];?>/src/plugins/src/highlight/highlight.pack.js"></script>

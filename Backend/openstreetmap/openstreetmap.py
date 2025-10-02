@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+from settings import DB_CONFIG
 import sys
 import json
 import time
 import logging
 from pprint import pprint
 from typing import Dict, Any, Optional
-
 import requests
 import mysql.connector
 from mysql.connector import Error
@@ -25,12 +24,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# === НАСТРОЙКИ ===
-try:
-    from utils.settings import DB_CONFIG
-except ImportError:
-    logger.error("❌ Не найден файл settings.py или отсутствует DB_CONFIG")
-    sys.exit(1)
+# # === НАСТРОЙКИ ===
+# try:
+#     from utils.settings import DB_CONFIG
+# except ImportError:
+#     logger.error("❌ Не найден файл settings.py или отсутствует DB_CONFIG")
+#     sys.exit(1)
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
@@ -39,7 +38,6 @@ ADMIN_LEVELS = {
     "regions": "6",
     "municipalities": "8"
 }
-
 
 def get_admin_type(admin_level: str) -> str:
     mapping = {
@@ -99,6 +97,8 @@ rel["ISO3166-1"="RU"]["admin_level"="2"];
 map_to_area;
 rel(area)["boundary"="administrative"]["admin_level"="{admin_level}"];
 out geom;"""
+
+    print(query)
 
     try:
         logger.info(f"📡 Запрос уровня {admin_level} к Overpass API...")

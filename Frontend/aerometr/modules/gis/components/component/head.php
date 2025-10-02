@@ -1,0 +1,2 @@
+<link rel="stylesheet" type="text/css" href="<?=$xc['tmp_url'];?>/src/assets/css/light/apps/blog-post.css">
+<link rel="stylesheet" type="text/css" href="<?=$xc['tmp_url'];?>/src/assets/css/dark/apps/blog-post.css">

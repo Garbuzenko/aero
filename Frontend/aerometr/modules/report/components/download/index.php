@@ -245,7 +245,17 @@ try {
     $pdf->AddPage();
     $pdf->writeHTML($pdfHTML, true, false, true, false, '');
 
-    $filename = 'aerometr_report_'.time().'.pdf';
+    $filename = 'aerometr_report_' . date('Y-m-d_H-i-s') . '.pdf';
+    
+    $filepath_for_db = '/files/pdf/' . $filename;
+    $full_filepath = $_SERVER['DOCUMENT_ROOT'] . $filepath_for_db;
+    
+    // Сохраняем файл на сервере
+    $pdf->Output($full_filepath, 'F');
+    
+    // Получаем заголовок для сохранения в БД
+    $title = 'Отчёт по всем регионам';
+    
     // Устанавливаем заголовки для скачивания
     header('Content-Type: application/pdf');
     header('Content-Disposition: attachment; filename="'.$filename.'"');
@@ -255,6 +265,22 @@ try {
     
     // Прямой вывод PDF в браузер
     $pdf->Output($filename, 'D');
+    
+    $add = db_query("INSERT INTO reports 
+    (filename, 
+    filepath, 
+    start_date, 
+    end_date, 
+    title,
+    user_id, 
+    created_at) 
+    VALUES ('".$filename."',
+    '".$filepath_for_db."',
+    '".$start_date."', 
+    '".$end_date."', 
+    '".$title."', 
+    '".intval($_SESSION['user_id'])."',
+    NOW())","i");
     
     exit(); 
 

@@ -55,6 +55,7 @@ class PolygonProcessor:
         try:
             url = "https://skyarc.ru/features/atpoint"
             params = {'lat': lat, 'lng': lng}
+            print(url, params)
             response = requests.get(url, params=params, timeout=30)
             response.raise_for_status()
             return response.json()

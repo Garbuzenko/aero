@@ -21,16 +21,17 @@
             var myArr = $.parseJSON(data);
             $('#jsProgressBarMessage').html(myArr['progress']);
             $('#jsProgressBarHtml').html('<div class="progress br-30"><div class="progress-bar bg-primary progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="'+myArr['percent']+'" aria-valuemin="0" aria-valuemax="100" style="width: '+myArr['percent']+'%"></div></div>'); 
-            $('#uploadTerminal').append(myArr['terminal']);
-            var block = document.getElementById('uploadTerminal');
-            block.scrollTop = block.scrollHeight;
-            
+            if (myArr['terminal'] != '') {
+                $('#uploadTerminal').append(myArr['terminal']);
+                var block = document.getElementById('uploadTerminal');
+                block.scrollTop = block.scrollHeight;
+            }
             if (myArr['percent'] == '100.00') {
                 $('#jsEditUploadStatus').html('');
                 return false;
             }
         }
       });       
-     }, 3000 );
+     }, 2000 );
   });
 </script>

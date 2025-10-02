@@ -47,7 +47,7 @@
            <div id="uploadTerminal" class="uploadTerminalMainBlock py-2 px-3 border">
              <?if($lastUploads!=false):?>
                <?foreach($reversedArray as $k=>$v):?>
-               <?=$v['timestamp'];?><br />
+               <?=$v['timestamp'];?>
                <?=$v['message'];?><br />
                <?endforeach;?>
              <?endif;?>

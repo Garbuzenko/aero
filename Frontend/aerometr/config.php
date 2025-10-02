@@ -11,8 +11,10 @@ $xc['db_name'] = '';
 $xc['db_user'] = '';
 $xc['db_pass'] = '';
 
-$xc['update'] = true; 
+$xc['update'] = false; 
 $xc['noMainTmp'] = false;
+$xc['admin_panel_only'] = false; // если нужна только админка, то при заходе на сайт будет сразу перенаправлять туда
+$xc['admin_main_module'] = ''; // модуль по умолчанию (для главной страницы в админке)
 
 $xc['ya_map'] = false; // яндекс карты
 $xc['bottom_popup_window'] = false;
@@ -25,12 +27,14 @@ $xc['close'] = true;
 $xc['description'] = null;
 $xc['tmp_url'] = DOMAIN.'/template/cork';
 
-
+//$xc['yaMapsVer'] = '2.1.44';
 $xc['yaMapsVer'] = 'v3';
 
 $xc['close_modules'] = array(
   'upload' => 1,
-  'settings' => 1
+  'settings' => 1,
+  'api-info' => 1,
+  'reports' => 1
 );
 
 $xc['open_modules'] = array(
@@ -41,9 +45,16 @@ $xc['mod_menu'] = array(
   'main' => null,
   'upload' => null,
   'module' => null,
+  'analytics' => null,
   'reports' => null,
   'regions' => null,
   'settings' => null,
+  'api-info' => null,
+  'overpass' => null,
+  'opensky' => null,
+  'skyarc' => null,
+  'map' => null,
+  'gis' => null,
   'video' => null,
   'docs' => null,
   'presentation' => null,

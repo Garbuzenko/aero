@@ -12,8 +12,9 @@ from shapely.prepared import prep
 import rtree
 from functools import lru_cache
 
-from opensky_client import OpenSkyClient
-from polygon_processor import PolygonProcessor
+from aircraft.opensky_client import OpenSkyClient
+# from opensky_client import OpenSkyClient
+from aircraft.polygon_processor import PolygonProcessor
 from settings import DB_CONFIG
 
 

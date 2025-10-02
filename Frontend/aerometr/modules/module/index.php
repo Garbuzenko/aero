@@ -10,39 +10,40 @@ $modArr = array(
    'height' => 1500
  ),
  'dash-honeycombs' => array(
-   'title' => 'Соты',
-   'breadcrumbs' => 'Соты',
-   'url' => 'https://datalens.yandex/swlfq591h6y2d?_no_controls=1&_lang=ru&_theme=dark',
+   'title' => 'Гексагоны',
+   'breadcrumbs' => 'Гексагоны',
+//    'url' => 'https://datalens.ru/embeds/dash#dl_embed_token=eyJhbGciOiJQUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWJlZElkIjoidTBsYXBkdGhpZzFxZiIsImRsRW1iZWRTZXJ2aWNlIjoiWUNfREFUQUxFTlNfRU1CRURESU5HX1NFUlZJQ0VfTUFSSyIsImlhdCI6MTc1OTM0OTI2NSwiZXhwIjoxNzYyOTQ5MjY1LCJwYXJhbXMiOnt9fQ.MdlBvmiNwf_QDICbXjmtnLeIZm82i6KqXqIJjUA8pX3gVdxKoaNXOgnVpBTc24eksqFXaTv7U_bxEpWuBicSji0Ru_DDXbS-puyRaS0uqFMl22-07rEGfAqTA4Dqlge8HS0WnCg2vsC5f6-A_M61a1tTPIsTb45beaU2K9dJ8sD0ShhzMlLgOkFV9g4392jt1XnFlqFGPk4ZocQ7m5F8w0_Pz4sPY6f0eL2UuN2eyMmKTyN3k4Ylf9e9ujUbfh84R35ihbxsEaX4CWdYKzVh23Mre2W97JZuUY6_WhjUmtdJP3bLy_0P0-WG5W2iYEkM0Lfncwo0gETeydw5g5BCqA',
+   'url' => 'https://datalens.yandex/ek578ks9jipqz?_no_controls=1&_lang=ru&_theme=dark',
    'height' => 870
  ),
  'flight-density' => array(
-   'title' => 'Среднее время полёта',
-   'breadcrumbs' => 'Среднее время полёта',
-   'url' => 'https://datalens.yandex/6b5m2dmadeb2r?_no_controls=1&_lang=ru&_theme=dark',
-   'height' => 950
+   'title' => 'Плотность полетов',
+   'breadcrumbs' => 'Плотность полетов',
+   'url' => 'https://datalens.yandex/lrcefrqf3wyw6?_no_controls=1&_lang=ru&_theme=dark',
+   'height' => 1000
  ),
  'dash-clusterization' => array(
    'title' => 'Кластеризация',
    'breadcrumbs' => 'Кластеризация',
-   'url' => 'https://datalens.yandex/38vb62bqq1coo?_no_controls=1&_lang=ru&_theme=dark',
+   'url' => 'https://datalens.yandex/y4prs40mlxfqj?_no_controls=1&_lang=ru&_theme=dark',
    'height' => 1000
  ),
  'dash-heatmap' => array(
    'title' => 'Тепловая карта',
    'breadcrumbs' => 'Тепловая карта',
-   'url' => 'https://datalens.yandex/ch4kmvjuy11yx?_no_controls=1&_lang=ru&_theme=dark',
+   'url' => 'https://datalens.yandex/u0lno04y5gh2f?_no_controls=1&_lang=ru&_theme=dark',
    'height' => 1000
  ),
  'dash-infrastructure' => array(
    'title' => 'Инфраструктура',
    'breadcrumbs' => 'Инфраструктура',
-   'url' => 'https://datalens.yandex/jm1woidpcsi44?_no_controls=1&_theme=dark',
+   'url' => 'https://datalens.yandex/7dy01fxsehcgs?_no_controls=1&_theme=dark',
    'height' => 1000
  ),
  'dash-aviation' => array(
    'title' => 'Онлайн авиация',
    'breadcrumbs' => 'Онлайн авиация',
-   'url' => 'https://datalens.yandex/6byfsmt3tkyyr?_no_controls=1&_lang=ru&_theme=dark',
+   'url' => 'https://datalens.yandex/dj467kv1w83wy?_no_controls=1&_lang=ru&_theme=dark',
    'height' => 1000
  )
 );

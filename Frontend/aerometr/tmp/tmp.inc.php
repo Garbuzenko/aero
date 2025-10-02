@@ -15,8 +15,8 @@
     
     <link href="<?=$xc['tmp_url'];?>/layouts/vertical-dark-menu/css/light/loader.css" rel="stylesheet" type="text/css" />
     <link href="<?=$xc['tmp_url'];?>/layouts/vertical-dark-menu/css/dark/loader.css" rel="stylesheet" type="text/css" />
-    <script src="<?=$xc['tmp_url'];?>/layouts/vertical-dark-menu/loader.js"></script>
-
+    <script src="<?=$xc['tmp_url'];?>/layouts/vertical-dark-menu/loader2.js"></script>
+    
     <!-- BEGIN GLOBAL MANDATORY STYLES -->
     <link href="https://fonts.googleapis.com/css?family=Nunito:400,600,700" rel="stylesheet">
     <link href="<?=$xc['tmp_url'];?>/src/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
