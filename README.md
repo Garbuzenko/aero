@@ -10,7 +10,7 @@
 
 **Автоматизированная облачная система для сбора, обработки и анализа данных о полетах БПЛА в регионах России**
 
-[🌐 Демо-сайт](https://aerometr.ru) • [📊 Презентация](https://docs.google.com/presentation/d/1tS-MUPT5ISglaNvYg3ztEVZ49lHhbtIfs-_1oyVkrAg/edit?usp=sharing) • [🏗️ Архитектура](https://aerometr.ru/files/docs/drawio.html)
+[🌐 Демо-сайт](https://aerometr.ru) • [📊 Презентация](https://docs.google.com/presentation/d/1tS-MUPT5ISglaNvYg3ztEVZ49lHhbtIfs-_1oyVkrAg/edit?usp=sharing) • [🏗️ Архитектура](https://aerometr.ru/files/docs/drawio.html) • [🎥 Видео](https://rutube.ru/video/private/6b444e00317e7986e054958e791480f2/?p=_AFpffCVQgO6-BAo_ONkRA)
 
 </div>
 
