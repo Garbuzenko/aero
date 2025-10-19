@@ -38,13 +38,25 @@ logger = logging.getLogger(__name__)
 
 
 class FlightPredictorNew:
-    def __init__(self, db_config):
+    def __init__(self, db_config, use_expert_forecast=True, target_year=2030, growth_multiplier=10):
+        """
+        Инициализация предиктора полетов
+        
+        Args:
+            db_config: Конфигурация базы данных
+            use_expert_forecast: Использовать прогноз эксперта (True) или исторические данные (False)
+            target_year: Целевой год для прогноза (по умолчанию 2030)
+            growth_multiplier: Ожидаемый рост к целевому году (по умолчанию 10 = рост в 10 раз)
+        """
         self.db_config = db_config
         self.connection = None
         self.historical_data = None
         self.region_stats = None
         self.aircraft_types = None
         self.region_utc_cache = {}  # Кэш для UTC offset'ов регионов
+        self.use_expert_forecast = use_expert_forecast
+        self.target_year = target_year
+        self.growth_multiplier = growth_multiplier
 
     def connect_to_db(self):
         """Установка соединения с базой данных"""
@@ -264,7 +276,7 @@ class FlightPredictorNew:
             return []
 
     def calculate_growth_rate(self):
-        """Расчет темпа роста на основе исторических данных"""
+        """Расчет темпа роста на основе исторических данных или прогноза эксперта"""
         try:
             # Группируем по месяцам
             monthly_data = self.historical_data.groupby(
@@ -273,22 +285,95 @@ class FlightPredictorNew:
 
             logging.info(f"Данные по месяцам: {monthly_data.tolist()}")
 
-            if len(monthly_data) < 2:
-                logging.warning("Недостаточно данных для расчета темпа роста")
-                return 0.1  # По умолчанию 10% рост
+            # Находим последний год с данными
+            historical_dates = pd.to_datetime(self.historical_data['dof_date'])
+            last_date = historical_dates.max()
+            last_year = last_date.year
+            
+            if self.use_expert_forecast:
+                # Прогноз эксперта: рост в N раз к целевому году ОТНОСИТЕЛЬНО 2023 ГОДА
+                base_year = 2023
+                target_year = self.target_year
+                growth_multiplier = self.growth_multiplier
+                
+                # Рассчитываем среднее количество полетов в 2023 году
+                base_year_data = self.historical_data[
+                    historical_dates.dt.year == base_year
+                ]
+                
+                if len(base_year_data) == 0:
+                    logging.warning(f"Нет данных за базовый {base_year} год, используем первый доступный год")
+                    base_year = historical_dates.dt.year.min()
+                    base_year_data = self.historical_data[
+                        historical_dates.dt.year == base_year
+                    ]
+                
+                # Среднемесячное количество полетов в базовом году
+                base_monthly_avg = len(base_year_data) / 12
+                
+                # Текущее среднемесячное количество полетов (за последний год)
+                current_year_data = self.historical_data[
+                    historical_dates.dt.year == last_year
+                ]
+                current_monthly_avg = len(current_year_data) / max(1, last_date.month)
+                
+                # Целевое количество полетов в месяц к 2030 году
+                target_monthly_avg = base_monthly_avg * growth_multiplier
+                
+                # Уже достигнутый рост относительно 2023
+                current_growth_multiplier = current_monthly_avg / base_monthly_avg if base_monthly_avg > 0 else 1
+                
+                # Оставшийся рост для достижения цели
+                remaining_growth = target_monthly_avg / current_monthly_avg if current_monthly_avg > 0 else growth_multiplier
+                
+                # Количество месяцев от текущей даты до целевого года
+                months_to_target = (target_year - last_year) * 12 + (12 - last_date.month)
+                
+                # Расчет среднемесячного темпа роста для достижения цели
+                # Формула: remaining_growth = (1 + r)^months
+                # r = remaining_growth^(1/months) - 1
+                monthly_growth_rate = remaining_growth ** (1 / months_to_target) - 1
+                
+                logging.info(f"")
+                logging.info(f"╔══════════════════════════════════════════════════════════════╗")
+                logging.info(f"║       ПРОГНОЗ НА ОСНОВЕ ЭКСПЕРТНОЙ ОЦЕНКИ (от 2023)         ║")
+                logging.info(f"╠══════════════════════════════════════════════════════════════╣")
+                logging.info(f"║  Базовый год: {base_year}                                          ║")
+                logging.info(f"║  Среднее за {base_year}: {int(base_monthly_avg):,} полетов/месяц".ljust(60) + "  ║")
+                logging.info(f"║  Текущий период: {last_date.strftime('%Y-%m')}                               ║")
+                logging.info(f"║  Среднее сейчас: {int(current_monthly_avg):,} полетов/месяц".ljust(60) + "  ║")
+                logging.info(f"║  Уже достигнут рост: в {current_growth_multiplier:.2f} раза".ljust(60) + "  ║")
+                logging.info(f"║  ─────────────────────────────────────────────────────────   ║")
+                logging.info(f"║  Целевой год: {target_year}                                       ║")
+                logging.info(f"║  Целевое значение: {int(target_monthly_avg):,} полетов/месяц".ljust(60) + "  ║")
+                logging.info(f"║  Ожидаемый рост от {base_year}: в {growth_multiplier} раз ({int((growth_multiplier - 1) * 100)}%)".ljust(60) + "  ║")
+                logging.info(f"║  ─────────────────────────────────────────────────────────   ║")
+                logging.info(f"║  Период до цели: {months_to_target} месяцев".ljust(60) + "  ║")
+                logging.info(f"║  Оставшийся рост: в {remaining_growth:.2f} раза".ljust(60) + "  ║")
+                logging.info(f"║  Среднемесячный темп: {monthly_growth_rate * 100:.2f}%".ljust(60) + "  ║")
+                logging.info(f"║  Среднегодовой темп: {((1 + monthly_growth_rate)**12 - 1) * 100:.1f}%".ljust(60) + "  ║")
+                logging.info(f"╚══════════════════════════════════════════════════════════════╝")
+                logging.info(f"")
+                
+                return monthly_growth_rate
+            else:
+                # Исторический расчет на основе данных
+                if len(monthly_data) < 2:
+                    logging.warning("Недостаточно данных для расчета темпа роста")
+                    return 0.1  # По умолчанию 10% рост
 
-            # Расчет среднемесячного роста
-            growth_rates = []
-            for i in range(1, len(monthly_data)):
-                prev_value = monthly_data.iloc[i - 1]
-                if prev_value > 0:
-                    growth_rate = (monthly_data.iloc[i] - prev_value) / prev_value
-                    growth_rates.append(growth_rate)
-                    logging.debug(f"Рост месяца {i}: {growth_rate:.2%}")
+                # Расчет среднемесячного роста
+                growth_rates = []
+                for i in range(1, len(monthly_data)):
+                    prev_value = monthly_data.iloc[i - 1]
+                    if prev_value > 0:
+                        growth_rate = (monthly_data.iloc[i] - prev_value) / prev_value
+                        growth_rates.append(growth_rate)
+                        logging.debug(f"Рост месяца {i}: {growth_rate:.2%}")
 
-            avg_growth = np.mean(growth_rates) if growth_rates else 0.1
-            logging.info(f"Рассчитан средний темп роста: {avg_growth:.2%} на основе {len(growth_rates)} месяцев")
-            return max(avg_growth, 0.05)  # Минимальный рост 5%
+                avg_growth = np.mean(growth_rates) if growth_rates else 0.1
+                logging.info(f"Рассчитан средний темп роста: {avg_growth:.2%} на основе {len(growth_rates)} месяцев")
+                return max(avg_growth, 0.05)  # Минимальный рост 5%
         except Exception as e:
             logging.error(f"Ошибка расчета темпа роста: {e}")
             logging.debug(f"Трассировка ошибки: {traceback.format_exc()}")
@@ -311,13 +396,31 @@ class FlightPredictorNew:
         start_dt = datetime.strptime(start_date, '%Y-%m-%d')
         end_dt = datetime.strptime(end_date, '%Y-%m-%d')
 
+        # Находим последнюю дату в исторических данных
+        historical_dates = pd.to_datetime(self.historical_data['dof_date'])
+        last_historical_date = historical_dates.max()
+        
+        logging.info(f"Последняя дата в исторических данных: {last_historical_date}")
+        logging.info(f"Средний темп роста: {growth_rate:.2%}")
+
         # Генерируем данные для каждого месяца в периоде
         current_date = start_dt
+        month_index = 0  # Индекс месяца от начала прогноза
+        
         while current_date <= end_dt:
             year = current_date.year
             month = current_date.month
 
-            month_data = self.generate_monthly_prediction(month, year, growth_rate)
+            # Рассчитываем количество месяцев от последней исторической даты
+            months_from_last = (year - last_historical_date.year) * 12 + (month - last_historical_date.month)
+            
+            # Применяем кумулятивный рост: каждый месяц растет относительно предыдущего
+            # Используем формулу compound growth: (1 + growth_rate) ^ months_from_last
+            cumulative_growth_rate = (1 + growth_rate) ** max(0, months_from_last) - 1
+            
+            logging.info(f"Месяц {month}/{year}: месяцев от последних данных = {months_from_last}, кумулятивный рост = {cumulative_growth_rate:.2%}")
+
+            month_data = self.generate_monthly_prediction(month, year, cumulative_growth_rate)
             if month_data:
                 prediction_data.extend(month_data)
                 logging.info(f"Для месяца {month}/{year} сгенерировано {len(month_data)} записей")
@@ -325,6 +428,7 @@ class FlightPredictorNew:
                 logging.warning(f"Для месяца {month}/{year} не удалось сгенерировать данные")
 
             # Переход к следующему месяцу
+            month_index += 1
             if current_date.month == 12:
                 current_date = current_date.replace(year=current_date.year + 1, month=1)
             else:
@@ -338,37 +442,55 @@ class FlightPredictorNew:
         try:
             logging.info(f"Генерация данных для месяца {month}, год {year}")
 
-            # Фильтруем исторические данные для этого месяца
-            month_mask = pd.to_datetime(self.historical_data['dof_date']).dt.month == month
-            historical_month = self.historical_data[month_mask].copy()
+            # Фильтруем исторические данные для этого месяца, берем только ПОСЛЕДНИЙ год
+            historical_dates = pd.to_datetime(self.historical_data['dof_date'])
+            
+            # Находим последний год в исторических данных для данного месяца
+            month_mask = historical_dates.dt.month == month
+            month_data = self.historical_data[month_mask].copy()
+            
+            if not month_data.empty:
+                # Берем данные только за последний доступный год для этого месяца
+                last_year = historical_dates[month_mask].dt.year.max()
+                year_month_mask = (historical_dates.dt.month == month) & (historical_dates.dt.year == last_year)
+                historical_month = self.historical_data[year_month_mask].copy()
+                logging.info(f"Найдено {len(historical_month)} записей за {month}/{last_year} (последний доступный год)")
+            else:
+                historical_month = pd.DataFrame()
 
-            logging.info(f"Найдено {len(historical_month)} исторических записей для месяца {month}")
-
-            # Если нет данных для этого месяца, используем среднее за месяц
+            # Если нет данных для этого месяца, используем среднее за месяц из последнего года
             if historical_month.empty:
                 logging.warning(f"Нет исторических данных для месяца {month}")
                 
-                # Рассчитываем среднее количество записей за месяц
-                month_counts = self.historical_data.groupby(
-                    pd.to_datetime(self.historical_data['dof_date']).dt.to_period('M')
-                ).size()
+                # Находим последний год в данных
+                last_year = historical_dates.dt.year.max()
+                last_year_data = self.historical_data[historical_dates.dt.year == last_year]
                 
-                if len(month_counts) > 0:
-                    avg_month_count = int(month_counts.mean())
-                    logging.info(f"Среднее количество записей за месяц: {avg_month_count}")
+                # Рассчитываем среднее количество записей за месяц в последнем году
+                if not last_year_data.empty:
+                    month_counts = last_year_data.groupby(
+                        pd.to_datetime(last_year_data['dof_date']).dt.month
+                    ).size()
                     
-                    # Сэмплируем из всех данных среднее количество записей
-                    if len(self.historical_data) >= avg_month_count:
-                        historical_month = self.historical_data.sample(
-                            n=avg_month_count, replace=False, random_state=42 + month
-                        )
+                    if len(month_counts) > 0:
+                        avg_month_count = int(month_counts.mean())
+                        logging.info(f"Среднее количество записей за месяц в {last_year}: {avg_month_count}")
+                        
+                        # Сэмплируем из данных последнего года
+                        if len(last_year_data) >= avg_month_count:
+                            historical_month = last_year_data.sample(
+                                n=avg_month_count, replace=False, random_state=42 + month
+                            )
+                        else:
+                            historical_month = last_year_data.sample(
+                                n=avg_month_count, replace=True, random_state=42 + month
+                            )
+                        logging.info(f"Используем {len(historical_month)} записей на основе среднего за {last_year}")
                     else:
-                        historical_month = self.historical_data.sample(
-                            n=avg_month_count, replace=True, random_state=42 + month
-                        )
-                    logging.info(f"Используем {len(historical_month)} записей на основе среднего")
+                        logging.error("Невозможно рассчитать среднее количество записей")
+                        return []
                 else:
-                    logging.error("Невозможно рассчитать среднее количество записей")
+                    logging.error("Нет данных за последний год")
                     return []
 
             # Рассчитываем ожидаемое количество полетов с учетом роста
@@ -652,13 +774,29 @@ class FlightPredictorNew:
                 logging.error("Не удалось подключиться к базе данных")
                 return False
 
+            # Читаем параметры прогноза из настроек
+            use_expert_str = self.get_setting_value('use_expert_forecast', 'true')
+            self.use_expert_forecast = use_expert_str.lower() in ['true', '1', 'yes', 'да']
+            
+            target_year_str = self.get_setting_value('forecast_target_year', str(self.target_year))
+            try:
+                self.target_year = int(target_year_str)
+            except ValueError:
+                logging.warning(f"Неверное значение forecast_target_year: {target_year_str}, используем {self.target_year}")
+            
+            growth_multiplier_str = self.get_setting_value('forecast_growth_multiplier', str(self.growth_multiplier))
+            try:
+                self.growth_multiplier = float(growth_multiplier_str)
+            except ValueError:
+                logging.warning(f"Неверное значение forecast_growth_multiplier: {growth_multiplier_str}, используем {self.growth_multiplier}")
+
             # Читаем даты из настроек, если не переданы явно
             if prediction_start is None:
                 prediction_start = self.get_setting_value('prediction_start', '2025-08-01')
                 logging.info(f"Дата начала прогноза из настроек: {prediction_start}")
             
             if prediction_end is None:
-                prediction_end = self.get_setting_value('prediction_end', '2025-12-31')
+                prediction_end = self.get_setting_value('prediction_end', '2026-12-31')
                 logging.info(f"Дата окончания прогноза из настроек: {prediction_end}")
 
             logging.info(f"Начало генерации предсказаний для периода {prediction_start} - {prediction_end}...")
