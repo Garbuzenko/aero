@@ -1,10 +1,10 @@
 <div class="row" id="jsContent">
 <!-------------- Круговая диаграмма по типам беспилотников ------------------>
-<?if($types!=false):?>
+<?if(!empty($flightsStat['type'])):?>
 <div class="col-xl-4 col-lg-12 col-md-12 col-sm-12 col-12 layout-spacing">
-  <div class="widget widget-chart-two">
+  <div class="widget widget-chart-two h-100">
     <div class="widget-heading">
-      <h5 class="">Типы летательных аппаратов</h5>
+      <h5 class="">Типы БВС</h5>
     </div>
     <div class="widget-content">
       <div id="chart-2" class=""></div>
@@ -14,24 +14,135 @@
 <?endif;?>
 <!--------------------------------------------------------------------------->
 
-<!---------------- Количество полётов (график) ------------------------------>
-<div class="col-xl-8 col-lg-6 col-md-6 col-sm-12 col-12 layout-spacing">
-   <div class="widget-one widget h-100">
-      <div class="widget-content">
-         <div class="w-numeric-value">
-           <div class="w-icon">
-             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-send"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-           </div>
-           <div class="w-content">
-             <span class="w-value"><?=$stat['total_flights'];?></span>
-             <span class="w-numeric-title">Количество полётов</span>
-           </div>
-         </div>
-         <div class="w-chart">
-            <div id="total-orders"></div>
-         </div>
+<div class="col-xl-8 col-lg-12 col-md-12 col-sm-12 col-12 layout-spacing <?if(count($countMonthFl) < 3):?>hidden<?endif;?>" id="jsStatDownload3">
+  <div class="widget widget-chart-one">
+    <div class="widget-heading">
+      <h5 class="">Количество полётов по месяцам</h5>
+      <div class="task-action">
+        <div class="dropdown">
+          <a class="dropdown-toggle" href="#" role="button" id="renvenue" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-more-horizontal"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+          </a>
+          <div class="dropdown-menu left" aria-labelledby="renvenue" style="will-change: transform;">
+            <a class="dropdown-item" href="javascript:void(0);" onclick="captureFullPage('jsStatDownload3','#060818','<?=$btnTitle;?>')">Скачать</a>
+          </div>
+        </div>
       </div>
+    </div>
+    
+    <div class="widget-content">
+      <div id="revenueMonthly"></div>
+    </div>
+  </div>
+</div>
+
+
+<div class="col-xl-4 col-lg-6 col-md-6 col-sm-6 layout-spacing">
+   <div class="widget widget-t-sales-widget widget-m-sales">
+     <div class="media">
+       <div class="icon ml-2">
+         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bar-chart"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+       </div>
+       <div class="media-body">
+         <p class="widget-text">Полётов</p>
+         <p class="widget-numeric-value"><?=number_format($totalAllFlights,0,'',' ');?></p>
+       </div>
+     </div>  
+      <p class="widget-total-stats">Всего полётов за период</p>                        
    </div>
+</div>
+                        
+<div class="col-xl-4 col-lg-6 col-md-6 col-sm-6 layout-spacing">
+  <div class="widget widget-t-sales-widget widget-m-orders">
+    <div class="media">
+      <div class="icon ml-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-send"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+      </div>
+        <div class="media-body">
+          <p class="widget-text">Полётов в день</p>
+          <p class="widget-numeric-value"><?=number_format($stat['median_daily_flights'],0,'',' ');?></p>
+        </div>
+    </div>  
+    <p class="widget-total-stats">В среднем за день</p>              
+  </div>
+</div>
+                        
+<div class="col-xl-4 col-lg-6 col-md-6 col-sm-6 layout-spacing">
+  <div class="widget widget-t-sales-widget widget-m-customers">
+     <div class="media">
+       <div class="icon ml-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-zap"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+       </div>
+       <div class="media-body">
+         <p class="widget-text">Пиковая нагрузка</p>
+         <p class="widget-numeric-value"><?=number_format($flightsStat['dayPeakLoad'],0,'',' ');?></p>
+       </div>
+     </div> 
+     <p class="widget-total-stats">Максимум за день</p>                      
+  </div>
+</div>
+                        
+<div class="col-xl-4 col-lg-6 col-md-6 col-sm-6 layout-spacing">
+  <div class="widget widget-t-sales-widget widget-m-income">
+    <div class="media">
+      <div class="icon ml-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-watch"><circle cx="12" cy="12" r="7"></circle><polyline points="12 9 12 12 13.5 13.5"></polyline><path d="M16.51 17.35l-.35 3.83a2 2 0 0 1-2 1.82H9.83a2 2 0 0 1-2-1.82l-.35-3.83m.01-10.7l.35-3.83A2 2 0 0 1 9.83 1h4.35a2 2 0 0 1 2 1.82l.35 3.83"></path></svg>
+      </div>
+      <div class="media-body">
+        <p class="widget-text">Время полёта</p>
+        <p class="widget-numeric-value"><?=$stat['avg_flight_duration'];?></p>
+      </div>
+    </div>
+    <p class="widget-total-stats">Cреднее время полёта</p>
+                                
+  </div>
+</div> 
+
+<div class="col-xl-4 col-lg-6 col-md-6 col-sm-6 layout-spacing">
+   <div class="widget widget-t-sales-widget widget-m-sales">
+     <div class="media">
+       <div class="icon ml-2">
+         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-activity"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+       </div>
+       <div class="media-body">
+         <p class="widget-text">Высота полёта</p>
+         <p class="widget-numeric-value"><?=$flightsStat['altitudeAvg'];?> м.</p>
+       </div>
+     </div>  
+      <p class="widget-total-stats">Средняя высота полёта</p>                        
+   </div>
+</div>
+
+<div class="col-xl-4 col-lg-6 col-md-6 col-sm-6 layout-spacing">
+  <div class="widget widget-t-sales-widget widget-m-orders">
+    <div class="media">
+      <div class="icon ml-2">
+         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+      </div>
+        <div class="media-body">
+          <p class="widget-text">Плотность трафика</p>
+          <p class="widget-numeric-value"><?=$stat['flight_density'];?></p>
+        </div>
+    </div>  
+    <p class="widget-total-stats">Полётов на 1000 км<sup style="font-size: 7px;">2</sup></p>              
+  </div>
+</div>                     
+
+<!------------------------------ Карта региона ------------------------------>
+<div id="jsRegionHexagonMap" class="row" style="padding-right: calc(-4rem * .5) !important; padding-left: calc(2rem * .5) !important;">
+
+<div class="col-xl-4 col-lg-8 col-md-12 col-sm-12 col-12 layout-spacing" style="height: 425px;">
+<img src="<?=$regionImg;?>" alt="" class="regionsComponentImg" />
+</div>
+
+<div class="col-xl-8 col-lg-8 col-md-12 col-sm-12 col-12 layout-spacing" >
+  <div class="h-100" id="innerMapContainer" style="position: relative;">
+   <div class="widget-heading px-5 py-2" style="position: absolute; background-color: #0e1726; right: 0;">
+   <h5>Всего полётов: <?=$stat['total_flights'];?></h5>
+   </div>
+   <iframe frameborder="0" src="<?=DOMAIN;?>/regions/map?region=<?=$region_id;?>&start_date=<?=$start_date;?>&end_date=<?=$end_date;?>" width="100%" height="400"></iframe>
+  </div>
+</div>
 </div>
 <!--------------------------------------------------------------------------->
 
@@ -88,7 +199,7 @@
 <div class="col-xl-8 col-lg-6 col-md-6 col-sm-12 col-12 layout-spacing" id="jsStatDownload">
    <div class="widget widget-table-one">
      <div class="widget-heading">
-       <h5 class="">Статистика</h5>
+       <h5 class="">Аналитика полётов</h5>
        <div class="task-action">
          <div class="dropdown">
            <a class="dropdown-toggle" href="#" role="button" id="pendingTask" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -127,7 +238,7 @@
           <div class="t-company-name">
           <div class="t-icon">
             <div class="avatar">
-              <span class="avatar-title"><?=$stat['peak_load'];?></span>
+              <span class="avatar-title"><?=$flightsStat['dayPeakLoad'];?></span>
             </div>
           </div>
           <div class="t-name">
@@ -136,7 +247,7 @@
           </div>
         </div>
         <div class="t-rate rate-inc">
-          <p><span><?=lang_function($stat['peak_load'],'полёт');?></span></p>
+          <p><span><?=lang_function($flightsStat['dayPeakLoad'],'полёт');?></span></p>
         </div>
         </div>
       </div>
@@ -150,7 +261,7 @@
               </div>
             </div>
             <div class="t-name">
-              <h4>Среднее количество полётов</h4>
+              <h4>Среднее число полётов</h4>
               <p class="meta-date">Среднее количество полётов за сутки</p>
             </div>
          </div>
@@ -169,8 +280,8 @@
             </div>
           </div>
           <div class="t-name">
-            <h4>Плотность полётов</h4>
-            <p class="meta-date">Плотность полётов на 1000 км<sup style="font-size: 7px;">2</sup></p>
+            <h4>Плотность трафика</h4>
+            <p class="meta-date">Количество полётов на 1000 км<sup style="font-size: 7px;">2</sup></p>
           </div>
         </div>
         <div class="t-rate rate-inc">
@@ -188,7 +299,7 @@
             </div>
           </div>
           <div class="t-name">
-            <h4>Cредняя длительность полёта</h4>
+            <h4>Среднее время полёта</h4>
             <p class="meta-date">Cредняя продолжительность полёта</p>
           </div>
     
@@ -198,37 +309,103 @@
         </div>
       </div>
     </div>
+    
+    <div class="transactions-list t-info">
+      <div class="t-item">
+        <div class="t-company-name">
+          <div class="t-icon">
+            <div class="avatar">
+              <span class="avatar-title">КМ</span>
+            </div>
+          </div>
+          <div class="t-name">
+            <h4>Средняя высота полёта</h4>
+            <p class="meta-date">Средняя высота полёта в метрах</p>
+          </div>
+        </div>
+        <div class="t-rate rate-inc">
+          <p><span><?=$flightsStat['altitudeAvg'];?> м.</span></p>
+        </div>
+      </div>
+    </div>
 
    </div>
   </div>
 </div>
 <!--------------------------------------------------------------------------->                        
 
-<div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12 layout-spacing <?if(count($countMonthFl) < 3):?>hidden<?endif;?>" id="jsStatDownload3">
-  <div class="widget widget-chart-one">
-    <div class="widget-heading">
-      <h5 class="">Количество полётов по месяцам</h5>
-      <div class="task-action">
-        <div class="dropdown">
-          <a class="dropdown-toggle" href="#" role="button" id="renvenue" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-more-horizontal"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
-          </a>
-          <div class="dropdown-menu left" aria-labelledby="renvenue" style="will-change: transform;">
-            <a class="dropdown-item" href="javascript:void(0);" onclick="captureFullPage('jsStatDownload3','#060818','<?=$btnTitle;?>')">Скачать</a>
-          </div>
+
+
+<!--------------------- Прогресс бары (по операторам) ----------------------->
+<?if(!empty($flightsStat['operators'])):?> 
+<div class="col-xl-12 col-lg-6 col-md-6 col-sm-6 col-12 layout-spacing" id="jsStatDownloadOperators">
+<div class="widget widget-three">
+  <div class="widget-heading">
+    <h5 class="">Топ 10 опрераторов БВС</h5>
+    
+    <div class="task-action">
+      <div class="dropdown">
+        <a class="dropdown-toggle" href="#" role="button" id="summary" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-more-horizontal"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+        </a>
+    
+        <div class="dropdown-menu left" aria-labelledby="summary" style="will-change: transform;">
+          <a class="dropdown-item" href="javascript:void(0);" onclick="captureFullPage('jsStatDownloadOperators','#060818','<?=$btnTitle;?>')">Скачать</a>
         </div>
       </div>
     </div>
-    
-    <div class="widget-content">
-      <div id="revenueMonthly"></div>
-    </div>
   </div>
+  <div class="widget-content">
+    <div class="order-summary">
+      <?foreach($flightsStat['operators'] as $operKey=>$value):?>
+      <div class="summary-list">
+        <div class="w-summary-details">
+                                                
+        <div class="w-summary-info">
+          <h6><?=$value['name']?></h6>
+          <p class="summary-count"><?=$value['percent'];?>% (<?=number_format($value['countFlights'],0,'',' ');?>)</p>
+        </div>
+    
+        <div class="w-summary-stats">
+         <div class="progress">
+          <div class="progress-bar bg-gradient-primary" role="progressbar" style="width: <?=$value['percent'];?>%" aria-valuenow="<?=$value['percent'];?>" aria-valuemin="0" aria-valuemax="100"></div>
+         </div>
+       </div>
+       
+       </div>
+      </div>
+      <?endforeach;?>                              
+      </div>                               
+    </div>
 </div>
 </div>
-<div class="row">
-  <iframe frameborder="0" src="https://datalens.yandex/hn8abntoo1i42?_no_controls=1&_lang=ru&region_id=<?=$region_id?>&_theme=dark"" width="100%" height="1750px"></iframe>
+<?endif;?> 
+<!--------------------------------------------------------------------------->  
+
+<!---------------- Количество полётов (график) ------------------------------>
+<div class="col-xl-12 col-lg-6 col-md-6 col-sm-12 col-12 layout-spacing mb-5">
+   <div class="widget-one widget h-100">
+      <div class="widget-content">
+         <div class="w-numeric-value">
+           <div class="w-icon">
+             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-send"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+           </div>
+           <div class="w-content">
+             <span class="w-value"><?=$stat['total_flights'];?></span>
+             <span class="w-numeric-title">Количество полётов</span>
+           </div>
+         </div>
+         <div class="w-chart">
+            <div id="total-orders"></div>
+         </div>
+      </div>
+   </div>
 </div>
+<!--------------------------------------------------------------------------->
+
+</div>
+
+
 
 <div class="hidden">
     
@@ -638,11 +815,9 @@
                         </div>
 </div>
 </div>
-                    
-                    
+                                   
 <script src="<?=$xc['tmp_url'];?>/src/plugins/src/apex/apexcharts.min.js"></script>                
 <script>
-
 function simpleInitCharts() {
     
  getcorkThemeObject = localStorage.getItem("theme");
@@ -880,7 +1055,7 @@ function simpleInitCharts() {
             name: 'Полёты',
             data: <?=$countMonthFlJson;?>
         }, {
-            name: 'Летательные аппараты',
+            name: 'БПЛА',
             data: <?=$countMonthBlaJson;?>
         }],
         labels: <?=$countMonthFlLabelsJson;?>,

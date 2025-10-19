@@ -5,7 +5,9 @@ if (isset($_POST['form_id']) && $_POST['form_id'] == 'form_jsGetRegionMonth') {
    $lastMonth = clearData($_POST['month'],'date');
    
    // вытаскиваем статистику по регионам за этот месяц
-   $stat = db_query("SELECT * FROM region_stats_month WHERE month='".$lastMonth."'");
+   $stat = db_query("SELECT * FROM region_stats_month 
+   WHERE prediction='download' 
+   AND month='".$lastMonth."'");
    
    if ($stat != false) {
      foreach($stat as $k=>$v) {

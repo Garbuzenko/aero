@@ -13,7 +13,8 @@ if (!empty($xc['url']['start_date']) && !empty($xc['url']['end_date'])) {
    
   $stat = db_query("SELECT * 
     FROM region_stats 
-    WHERE date >= '".$start_date."' 
+    WHERE prediction='download'
+    AND date >= '".$start_date."' 
     AND date <= '".$end_date."'");
     
     if ($stat == false) {

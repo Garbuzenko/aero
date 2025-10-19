@@ -22,8 +22,8 @@ $start_date = '2025-01-01';
 $end_date = '2025-07-31';
 
 if (!empty($xc['url']['start_date']) && !empty($xc['url']['end_date'])) {
-    $start_date = clearData($xc['url']['start_date'],'date');
-    $end_date = clearData($xc['url']['end_date'],'date');
+    $start_date = clearData($xc['url']['start_date'], 'date');
+    $end_date = clearData($xc['url']['end_date'], 'date');
 }
 
 
@@ -46,65 +46,39 @@ $typeArr = array();
 $airTypesJson = null;
 $airTypesCountJson = null;
 
-$types = db_query("SELECT 
-        aircraft_type,
-        COUNT(*) as type_count
-        FROM processed_flights 
-        WHERE region_id = '" . $region_id . "'
-        AND dof_date >= '" . $start_date . "' 
-        AND dof_date <= '" . $end_date . "'
-        GROUP BY aircraft_type
-        ORDER BY type_count DESC");
+$typeName = db_query("SELECT type, name FROM aircraft_type");
 
-if ($types != false) {
-
-    $typeName = db_query("SELECT type, name 
-            FROM aircraft_type");
-
-    if ($typeName != false) {
-        foreach ($typeName as $k => $v) {
-            $typeArr[$v['type']] = $v['name'];
-        }
+if ($typeName != false) {
+    foreach ($typeName as $k => $v) {
+        $typeArr[$v['type']] = $v['name'];
     }
+}
 
-    foreach ($types as $k => $v) {
+$flights = db_query("SELECT * 
+        FROM " . $xc['processed_flights'] . " 
+        WHERE prediction='download'
+        AND departure_actual_date >= '" . $start_date . "' 
+        AND departure_actual_date <= '" . $end_date . "' 
+        AND region_id='" . $region_id . "'");
 
-        $at = $v['aircraft_type'];
+if ($flights != false) {
+    $flightsStat = countFlightsData($flights);
+    $totalAllFlights = count($flights);
 
-        if (!empty($typeArr[$v['aircraft_type']])) {
-            $at = $typeArr[$v['aircraft_type']] . ' (' . $v['aircraft_type'] . ')';
+    if (!empty($flightsStat['type'])) {
+        foreach ($flightsStat['type'] as $airType => $airTypeCount) {
+            $stat['air_types'][] = $airType . ' (' . $typeArr[$airType] . ')';
+            $stat['air_types_count'][] = $airTypeCount;
         }
 
-        $stat['air_types'][] = $at;
-        $stat['air_types_count'][] = $v['type_count'];
+        $airTypesJson = json_encode($stat['air_types']);
+        $airTypesCountJson = str_replace('"', '', json_encode($stat['air_types_count']));
     }
 
-    $airTypesJson = json_encode($stat['air_types']);
-    $airTypesCountJson = str_replace('"', '', json_encode($stat['air_types_count']));
-
-    // считаем количество беспилотников по месяцам
-    $colTypes = db_query("SELECT id, dof_date
-            FROM processed_flights 
-            WHERE region_id = '" . $region_id . "'
-            AND dof_date >= '" . $start_date . "' 
-            AND dof_date <= '" . $end_date . "' 
-            ORDER BY dof_date");
-
-    foreach ($colTypes as $k => $v) {
-
-        if (!empty($v['dof_date'])) {
-            $mt = substr($v['dof_date'], 0, 7);
-
-            if (empty($countMonthBla[$mt])) {
-                $countMonthBla[$mt] = 1;
-            } else {
-                $countMonthBla[$mt] += 1;
-            }
-        }
+    if (!empty($flightsStat['months'])) {
+        $countMonthBlaJson = array_values($flightsStat['months']);
+        $countMonthBlaJson = json_encode($countMonthBlaJson);
     }
-    $countMonthBlaJson = array_values($countMonthBla);
-    $countMonthBlaJson = json_encode($countMonthBlaJson);
-    // ---------------------------------------------------------------------
 
 }
 // -------------------------------------------------------------------------
@@ -134,7 +108,8 @@ $timeOfDaySettings = array(
 
 $rStat = db_query("SELECT * 
         FROM region_stats 
-        WHERE region_id = '" . $region_id . "'
+        WHERE prediction='download'
+        AND region_id = '" . $region_id . "'
         AND date >= '" . $start_date . "' 
         AND date <= '" . $end_date . "'
         ORDER BY date");
@@ -159,12 +134,6 @@ if ($rStat != false) {
             $stat['total_flights'] += $v['total_flights'];
         }
         // -------------------------------------------------------
-
-        // сумируем значение число на 1000 км2
-        $stat['flight_density'] += $v['flight_density'];
-
-        // средняя длительность полёта в минутах
-        $stat['avg_duration_min'] += $v['avg_duration_min'];
 
         // количество полётов по дням
         $stat['total_flights_list'][] = $v['total_flights'];
@@ -207,36 +176,16 @@ if ($rStat != false) {
 
     // количество полётов за каждый день, а соответственно и количество дней в периоде
     if (!empty($stat['total_flights_list'])) {
-
         $countDays = count($stat['total_flights_list']);
-
-        // день с максимальным количеством полётов за период
-        $stat['peak_load'] = max($stat['total_flights_list']);
-
-        // среднее количество полётов за день
-        $stat['median_daily_flights'] = round($stat['total_flights'] / $countDays);
-
-        // средняя длительность полёта
-        $stat['avg_flight_duration'] = round($stat['avg_duration_min'] / $countDays);
-        $stat['avg_flight_duration'] = minutesToHoursMinutes($stat['avg_flight_duration']);
-
-        // плотность полётов на 1000 км2
-        $stat['flight_density'] = $stat['flight_density'] / $countDays;
-        $stat['flight_density'] = round($stat['flight_density'], 2);
-
         $totalFlightsJson = str_replace('"', '', json_encode($stat['total_flights_list']));
     }
 
     if (!empty($stat['total_flights'])) {
 
-        $timeOfDay['morning']['percent'] = ($timeOfDay['morning']['flights'] / $stat['total_flights']) *
-            100;
-        $timeOfDay['day']['percent'] = ($timeOfDay['day']['flights'] / $stat['total_flights']) *
-            100;
-        $timeOfDay['evening']['percent'] = ($timeOfDay['evening']['flights'] / $stat['total_flights']) *
-            100;
-        $timeOfDay['night']['percent'] = ($timeOfDay['night']['flights'] / $stat['total_flights']) *
-            100;
+        $timeOfDay['morning']['percent'] = ($timeOfDay['morning']['flights'] / $stat['total_flights']) * 100;
+        $timeOfDay['day']['percent'] = ($timeOfDay['day']['flights'] / $stat['total_flights']) * 100;
+        $timeOfDay['evening']['percent'] = ($timeOfDay['evening']['flights'] / $stat['total_flights']) * 100;
+        $timeOfDay['night']['percent'] = ($timeOfDay['night']['flights'] / $stat['total_flights']) * 100;
 
         $timeOfDay['morning']['percent'] = round($timeOfDay['morning']['percent']);
         $timeOfDay['day']['percent'] = round($timeOfDay['day']['percent']);
@@ -261,12 +210,33 @@ if ($rStat != false) {
 }
 // -------------------------------------------------------------------------
 
-$title = $region[0]['name'] . '. Статистика с ' .date('d.m.Y', strtotime($start_date)) . ' по ' . date('d.m.Y', strtotime($end_date));
+// плотность полётов на 1000 км2
+$stat['flight_density'] = (count($flights) / $region[0]['area_sq_km']) * 1000;
+$stat['flight_density'] = round($stat['flight_density'], 2);
+        
+// среднее количество полётов за день
+$stat['median_daily_flights'] = round( count($flights) / $countDays);
+
+// средняя длительность полёта
+$stat['avg_flight_duration'] = minutesToHoursMinutes($flightsStat['avgFlightsDuration']);
+        
+// -------------------------------------------------------------------------
+
+
+$title = $region[0]['name'] . '. Статистика с ' . date('d.m.Y', strtotime($start_date)) . ' по ' . date('d.m.Y', strtotime($end_date));
 $btnTitle = $title;
+
+$period =  'с '.date('d.m.Y', strtotime($start_date)) . ' по ' . date('d.m.Y', strtotime($end_date));
+
+$regionImg = null;
+        
+if (file_exists($_SERVER['DOCUMENT_ROOT'].'/img/regions/'.$region[0]['id'].'.jpg')) {
+   $regionImg = DOMAIN.'/img/regions/'.$region[0]['id'].'.jpg';
+}
 
 // достаём шаблон дашборда
 ob_start();
-include $_SERVER['DOCUMENT_ROOT'] .'/modules/main/components/map/includes/regionStat.inc.php';
+include $_SERVER['DOCUMENT_ROOT'] . '/modules/main/components/map/includes/regionStat.inc.php';
 $regionStat = ob_get_clean();
 
 $xc['bread_crumbs'] = array(0 => array(

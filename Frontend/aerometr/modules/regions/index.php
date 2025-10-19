@@ -10,7 +10,7 @@ $regionsList = null;
 // достаём уникальные месяцы из таб. region_stats_month
 $regionStats = array();
 
-$m = db_query("SELECT month FROM region_stats_month GROUP BY month");
+$m = db_query("SELECT month FROM region_stats_month WHERE prediction='download' GROUP BY month");
 
 if ($m != false) {
     // Сортируем по убыванию (от новых к старым)
@@ -22,7 +22,7 @@ if ($m != false) {
    $lastMonth = $m[0]['month'];
    
    // вытаскиваем статистику по регионам за этот месяц
-   $stat = db_query("SELECT * FROM region_stats_month WHERE month='".$lastMonth."'");
+   $stat = db_query("SELECT * FROM region_stats_month WHERE prediction='download' AND month='".$lastMonth."'");
    
    if ($stat != false) {
      foreach($stat as $k=>$v) {

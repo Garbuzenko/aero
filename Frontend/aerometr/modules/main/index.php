@@ -1,5 +1,6 @@
 <?php defined('DOMAIN') or exit(header('Location: /'));
 
+$mapVer = 1;
 $regionsList = null;
 $regionStats = array();
 $startDate = null;
@@ -7,8 +8,29 @@ $endDate = null;
 $minMonth = null;
 $regColorsData = array();
 $thisYear = date("Y");
+$totalAllFlights = 0;
 
-$m = db_query("SELECT month FROM region_stats_month GROUP BY month ORDER BY month DESC");
+$countMonthFl = array();
+$countMonthBla = array();
+$countMonthFlJson = null;
+$countMonthBlaJson = null;
+$countMonthFlLabelsJson = null;
+
+$stat = array();
+$stat['zero_days'] = 0;
+$stat['peak_load'] = 0;
+$stat['median_daily_flights'] = 0;
+$stat['flight_density'] = 0;
+$stat['avg_duration_min'] = 0;
+$stat['avg_flight_duration'] = 0;
+
+$mapVer = 1;
+
+$m = db_query("SELECT month 
+  FROM region_stats_month 
+  WHERE prediction='download' 
+  GROUP BY month 
+  ORDER BY month DESC");
 
 if ($m != false) {
     
@@ -22,12 +44,33 @@ if ($m != false) {
    $endDate = $lastMonth.'-'.date('t', strtotime($lastMonth));
    
    // вытаскиваем статистику по регионам за последний год
-   $stat = db_query("SELECT * 
+   $stat1 = db_query("SELECT * 
    FROM region_stats_month 
-   WHERE month LIKE ('".$lastYear."-%')");
+   WHERE prediction='download'
+   AND month LIKE ('".$lastYear."-%')");
    
-   if ($stat != false) {
-     foreach($stat as $k=>$v) {
+   if ($stat1 != false) {
+     foreach($stat1 as $k=>$v) {
+       
+        // считаем количество полётов по месяцам
+        $mt = $v['month'];
+
+        if (empty($countMonthFl[$mt])) {
+            $countMonthFl[$mt] = $v['total_flights'];
+        } else {
+            $countMonthFl[$mt] += $v['total_flights'];
+        }
+       // ------------------------------------------------------- 
+        
+       // общее количество полётов за период
+        if (empty($stat['total_flights'])) {
+            $stat['total_flights'] = $v['total_flights'];
+        } else {
+            $stat['total_flights'] += $v['total_flights'];
+        }
+        // -------------------------------------------------------
+
+       
        // количество полётов 
        if (empty($regionStats[ $v['region_id'] ]['total_flights'])) {
           $regionStats[ $v['region_id'] ]['total_flights'] = $v['total_flights'];
@@ -84,6 +127,11 @@ if ($m != false) {
        $regionStats[ $v['region_id'] ]['peak_load'][] = $v['peak_load'];
      }
      
+     
+     // количество дней в выбранном периоде
+    $monthArr = array_keys($countMonthFl);
+    $countDays = countDaysInMonths($monthArr);
+     
      // перебираем массив, нужно посчитать среднее по всем месяцам значение
      // продолжительность полёта в минутах
      // средняя плотность на 1000 км2
@@ -92,11 +140,12 @@ if ($m != false) {
          $countMonths = count( $val['months'] );
          
          $regColorsData[ $region_id ] = $val['total_flights'];
+         //$totalAllFlights += $val['total_flights'];
          
          if (empty($minMonth)) {
             $minMonth = min($val['months']);
          }
-         
+
          // форматируем для лучшей читаемости количество полётов
          //$regionStats[ $region_id ]['total_flights'] = number_format($val['total_flights'],0,'',' ');
          
@@ -105,7 +154,7 @@ if ($m != false) {
          
          if (!empty( $regionStats[ $region_id ]['avg_flight_duration'] )) {
             //$regionStats[ $region_id ]['avg_flight_duration'] = minutesToHoursMinutes( round($regionStats[ $region_id ]['avg_flight_duration']));
-            $regionStats[ $region_id ]['avg_flight_duration'] = round($regionStats[ $region_id ]['avg_flight_duration']);
+            $regionStats[ $region_id ]['avg_flight_duration'] = minutesToHoursMinutes(round($regionStats[ $region_id ]['avg_flight_duration']));
          }
          // ----------------------------------------------------
          
@@ -137,7 +186,64 @@ if ($m != false) {
      $maxValue = max($regColorsData);
      $minValue = min($regColorsData);
      arsort($regColorsData);
+     
+     $countMonthFlJson = array_values($countMonthFl);
+     $countMonthFlJson = json_encode($countMonthFlJson);
+     $cm = array_keys($countMonthFl);
+     $cArr = array();
+
+     foreach ($cm as $k => $v) {
+        $cArr[] = dateRussianMonthShort(strtotime($v . '-01'));
+     }
+
+     $countMonthFlLabelsJson = json_encode($cArr);
+     
    }
+   //exit( print_r($regColorsData) );
+   // вытаскиваем все полёты за выбранный период
+   // типы беспилотников
+   $typeArr = array();
+   $airTypesJson = null;
+   $airTypesCountJson = null;
+
+   $typeName = db_query("SELECT type, name FROM aircraft_type");
+
+    if ($typeName != false) {
+      foreach ($typeName as $k => $v) {
+        $typeArr[$v['type']] = $v['name'];
+      }
+   }
+
+   $flightsStat = array();
+   
+   $flights = db_query("SELECT *
+   FROM ".$xc['processed_flights']."
+   WHERE prediction='download' 
+   AND departure_actual_date LIKE ('".$lastYear."-%')");
+   
+   if ($flights != false) {
+
+      $flightsStat = countFlightsData($flights);
+      
+      if (!empty($flightsStat['type'])) {
+        foreach ($flightsStat['type'] as $airType => $airTypeCount) {
+            $stat['air_types'][] = $airType . ' (' . $typeArr[$airType] . ')';
+            $stat['air_types_count'][] = $airTypeCount;
+        }
+
+        $airTypesJson = json_encode($stat['air_types']);
+        $airTypesCountJson = str_replace('"', '', json_encode($stat['air_types_count']));
+      }
+
+      if (!empty($flightsStat['months'])) {
+        $countMonthBlaJson = array_values($flightsStat['months']);
+        $countMonthBlaJson = json_encode($countMonthBlaJson);
+      }
+      
+      $stat['peak_load'] = $flightsStat['dayPeakLoad'];
+      
+   }
+   
 }
 
 
@@ -161,6 +267,9 @@ if ($colors != false) {
     }
 }
 
+$totalAllFlights = count($flights);
+$ruAreaSqKm = 0; // будем считать общую площадь всех регионов
+
 $regList = db_query("SELECT * FROM regions");
 
 if ($regList != false) {
@@ -178,16 +287,46 @@ if ($regList != false) {
             $img = DOMAIN.'/img/regions/'.$v['id'].'.jpg';
         }
         
+        $ruAreaSqKm += $v['area_sq_km'];
+        
+        $countBla = 0;
+        
+        if (!empty($flightsStat['regions'][ $v['id'] ])) {
+            $countBla = $flightsStat['regions'][ $v['id'] ];
+        }
+        
         $keys = array_keys($regColorsData);
         $position = array_search($v['id'], $keys) + 1;
         
+        $percentFlights = 0;
+        $regionTotalFlights = 0;
+        
+        $peakLoad = 0;
+        $avgFlightDuration = 0;
+        $flightDensity = 0;
+        $medianDailyFlights = 0;
+        
+        if (!empty($regionStats[ $v['id'] ]['total_flights'])) {
+          $percentFlights = countPercentFlights($totalAllFlights,$regionStats[ $v['id'] ]['total_flights']);
+          $regionTotalFlights = $regionStats[ $v['id'] ]['total_flights'];
+        }
+        
+        if (!empty($regionStats[ $v['id'] ])) {
+            $peakLoad = $regionStats[ $v['id'] ]['max_peak_load'];
+            $avgFlightDuration = $regionStats[ $v['id'] ]['avg_flight_duration'];
+            $flightDensity = $regionStats[ $v['id'] ]['flight_density'];
+            $medianDailyFlights = $regionStats[ $v['id'] ]['median_daily_flights'];
+        }
+        
         $regions[] = array(
-          'total_flights' => $regionStats[ $v['id'] ]['total_flights'],
+          'total_flights' => $regionTotalFlights,
+          'count_bla' => $countBla,
           'id' => $v['id'],
           'name' => $v['name'],
+          'url' => DOMAIN.'/regions/'.$v['pagename'].'?start_date='.$startDate.'&end_date='.$endDate,
           'img' => $img,
           'flag' => $flag,
-          'url' => DOMAIN.'/regions/'.$v['pagename']      
+          'percent' => $percentFlights    
         );
        
         
@@ -195,16 +334,17 @@ if ($regList != false) {
           $myPolygonsData[] = array(
             array( 'id' => $v['id'],
              'coordinates' => json_decode($v['polygon_v3'],true),
-             'fillColor' => regionColor($colorsReg,$regionStats[ $v['id'] ]['total_flights'],$minValue,$maxValue),
+             'fillColor' => regionColor($colorsReg,$regionTotalFlights,$minValue,$maxValue),
              'properties' => array(
                'name' => $v['name'], 
                'startDate' => $startDate, 
                'endDate' => $endDate,
-               'totalFlights' => number_format($regionStats[ $v['id'] ]['total_flights'],0,'',' '),
-               'avgFlightDuration' => minutesToHoursMinutes($regionStats[ $v['id'] ]['avg_flight_duration']),
-               'maxPeakLoad' => $regionStats[ $v['id'] ]['max_peak_load'],
-               'flightDensity' => $regionStats[ $v['id'] ]['flight_density'],
-               'medianDailyFlights' => $regionStats[ $v['id'] ]['median_daily_flights'],
+               'totalFlights' => number_format($regionTotalFlights,0,'',' '),
+               'totalBla' => number_format($countBla,0,'',' '),
+               'avgFlightDuration' => $avgFlightDuration,
+               'maxPeakLoad' => $peakLoad,
+               'flightDensity' => $flightDensity,
+               'medianDailyFlights' => $medianDailyFlights,
                'rating' => $position,
                'flag' => $flag
              )
@@ -216,5 +356,18 @@ if ($regList != false) {
     
     $myPolygonsDataJson = json_encode($myPolygonsData, true);
 }
+
+// плотность полётов на 1000 км2
+$stat['flight_density'] = (count($flights) / $ruAreaSqKm) * 1000;
+$stat['flight_density'] = round($stat['flight_density'], 2);
+
+// среднее количество полётов за день
+$stat['median_daily_flights'] = round( count($flights) / $countDays);
+
+// средняя длительность полёта
+$stat['avg_flight_duration'] = minutesToHoursMinutes($flightsStat['avgFlightsDuration']);
+
+// заголовок для скриншотов
+$mainTitle = 'Полёты БВС по России. Статистика с ' . date('d.m.Y', strtotime($startDate)) . ' по ' . date('d.m.Y', strtotime($endDate));
 
 ?>

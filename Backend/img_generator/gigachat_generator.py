@@ -8,8 +8,12 @@ import os
 import re
 from bs4 import BeautifulSoup
 
-from utils import settings
-from utils.settings import DB_CONFIG
+import sys
+import os
+import re
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import settings
+from settings import DB_CONFIG
 
 
 class GigaChatRegionGenerator:

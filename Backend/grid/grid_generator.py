@@ -8,7 +8,11 @@ from decimal import Decimal, ROUND_HALF_UP
 import time
 import json
 import h3
+import sys
+import os
+import re
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from settings import DB_CONFIG
 
 # Настройка логирования
@@ -166,6 +170,14 @@ class GridGenerator:
 
         return inside
 
+    def has_negative_coordinates(self, polygon_coords: List[List[float]]) -> bool:
+        """Проверяет, содержит ли полигон отрицательные координаты"""
+        for coord in polygon_coords:
+            if len(coord) >= 2:
+                if coord[0] < 0 or coord[1] < 0:
+                    return True
+        return False
+
     def calculate_cell_size(self, area_km2: float, latitude: float = 55.0) -> Tuple[float, float]:
         """
         Расчет размера ячейки в градусах по площади
@@ -236,6 +248,7 @@ class GridGenerator:
                 CREATE TABLE grid_hexagon (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     polygon LONGTEXT NOT NULL,
+                    polygon_v3 LONGTEXT NOT NULL,
                     center_lat DECIMAL(11, 8) NOT NULL,
                     center_lon DECIMAL(11, 8) NOT NULL,
                     area_km2 FLOAT NOT NULL,
@@ -303,6 +316,12 @@ class GridGenerator:
                     continue
 
                 polygon = self.generate_square_polygon(rounded_lat, rounded_lon, lat_step, lon_step)
+
+                # Проверяем на наличие отрицательных координат
+                if self.has_negative_coordinates(polygon):
+                    skipped += 1
+                    lon += lon_step
+                    continue
 
                 # Форматируем полигон в требуемом формате
                 polygon_json = json.dumps([polygon])
@@ -397,17 +416,27 @@ class GridGenerator:
                 polygon_coords = [[lat, lng] for lng, lat in boundary]
                 polygon_coords.append(polygon_coords[0])
 
+                # Создание polygon_v3 с поменянными местами координатами [lon, lat]
+                polygon_v3_coords = [[lng, lat] for lng, lat in boundary]
+                polygon_v3_coords.append(polygon_v3_coords[0])
+
+                # Проверяем на наличие отрицательных координат в любом из полигонов
+                if self.has_negative_coordinates(polygon_coords) or self.has_negative_coordinates(polygon_v3_coords):
+                    skipped += 1
+                    continue
+
                 region_id = self.find_region_for_point(rounded_lat, rounded_lon)
                 if not region_id:
                     skipped += 1
                     continue
 
                 polygon_json = json.dumps([polygon_coords])
+                polygon_v3_json = json.dumps([polygon_v3_coords])
 
                 cursor.execute("""
-                    INSERT INTO grid_hexagon (polygon, center_lat, center_lon, area_km2, region_id)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (polygon_json, rounded_lat, rounded_lon, area_km2, region_id))
+                    INSERT INTO grid_hexagon (polygon, polygon_v3, center_lat, center_lon, area_km2, region_id)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (polygon_json, polygon_v3_json, rounded_lat, rounded_lon, area_km2, region_id))
                 count += 1
             except Exception as e:
                 logger.error(f"Ошибка обработки ячейки {h3_index}: {e}")
@@ -451,6 +480,132 @@ class GridGenerator:
 
         return best_res
 
+    def update_processed_flights_hexagon_id(self):
+        """Обновление поля hexagon_id в таблице processed_flights"""
+        try:
+            cursor = self.connection.cursor()
+
+            # Очистка предыдущих назначений
+            logger.info("Очистка предыдущих назначений hexagon_id...")
+            cursor.execute("UPDATE processed_flights SET hexagon_id = 0")
+            self.connection.commit()
+
+           
+
+            # Эффективный поиск ближайшего hexagon для каждой точки вылета
+            logger.info("Начинаем обновление hexagon_id для processed_flights...")
+            
+            # Получаем все точки вылета с координатами(только download данные)
+            cursor.execute("""
+                SELECT id, departure_lat, departure_lon 
+                FROM processed_flights 
+                WHERE departure_lat IS NOT NULL 
+                AND departure_lon IS NOT NULL
+                AND hexagon_id = 0
+                AND prediction='download'
+            """)
+            flight_points = cursor.fetchall()
+            
+            logger.info(f"Найдено {len(flight_points)} точек для обновления")
+            
+            if not flight_points:
+                logger.info("Нет точек для обновления")
+                return 0
+
+            # Получаем все hexagon центры
+            cursor.execute("SELECT id, center_lat, center_lon FROM grid_hexagon")
+            hexagon_centers = cursor.fetchall()
+            
+            logger.info(f"Найдено {len(hexagon_centers)} hexagon центров")
+            
+            if not hexagon_centers:
+                logger.warning("Нет hexagon центров для сопоставления")
+                return 0
+
+            # Создаем словарь для быстрого поиска ближайшего hexagon
+            # Группируем hexagon по регионам для ускорения поиска
+            hexagon_dict = {}
+            for hex_id, hex_lat, hex_lon in hexagon_centers:
+                # Преобразуем Decimal в float для корректных вычислений
+                hex_lat_float = float(hex_lat)
+                hex_lon_float = float(hex_lon)
+                
+                # Округляем координаты для группировки
+                lat_key = round(hex_lat_float, 2)
+                lon_key = round(hex_lon_float, 2)
+                key = (lat_key, lon_key)
+                if key not in hexagon_dict:
+                    hexagon_dict[key] = []
+                hexagon_dict[key].append((hex_id, hex_lat_float, hex_lon_float))
+
+            # Обновляем по батчам для оптимизации
+            batch_size = 1000
+            updated_count = 0
+            
+            for i in range(0, len(flight_points), batch_size):
+                batch = flight_points[i:i + batch_size]
+                batch_updates = []
+                
+                for flight_id, flight_lat, flight_lon in batch:
+                    # Преобразуем координаты полета в float
+                    flight_lat_float = float(flight_lat)
+                    flight_lon_float = float(flight_lon)
+                    
+                    # Находим ближайший hexagon
+                    min_distance = float('inf')
+                    closest_hexagon_id = None
+                    
+                    # Сначала ищем в ближайших группах
+                    search_radius = 0.1  # градусов
+                    for lat_offset in [-search_radius, 0, search_radius]:
+                        for lon_offset in [-search_radius, 0, search_radius]:
+                            key = (round(flight_lat_float + lat_offset, 2), round(flight_lon_float + lon_offset, 2))
+                            if key in hexagon_dict:
+                                for hex_id, hex_lat, hex_lon in hexagon_dict[key]:
+                                    # Используем манхэттенское расстояние для скорости
+                                    distance = abs(flight_lat_float - hex_lat) + abs(flight_lon_float - hex_lon)
+                                    if distance < min_distance:
+                                        min_distance = distance
+                                        closest_hexagon_id = hex_id
+                    
+                    # Если не нашли в ближайших группах, ищем во всех
+                    if closest_hexagon_id is None:
+                        for hex_id, hex_lat, hex_lon in hexagon_centers:
+                            # Преобразуем Decimal в float
+                            hex_lat_float = float(hex_lat)
+                            hex_lon_float = float(hex_lon)
+                            distance = abs(flight_lat_float - hex_lat_float) + abs(flight_lon_float - hex_lon_float)
+                            if distance < min_distance:
+                                min_distance = distance
+                                closest_hexagon_id = hex_id
+                    
+                    if closest_hexagon_id:
+                        batch_updates.append((closest_hexagon_id, flight_id))
+                
+                # Выполняем батчевое обновление
+                if batch_updates:
+                    update_cursor = self.connection.cursor()
+                    update_cursor.executemany(
+                        "UPDATE processed_flights SET hexagon_id = %s WHERE id = %s",
+                        batch_updates
+                    )
+                    self.connection.commit()
+                    update_cursor.close()
+                    updated_count += len(batch_updates)
+                
+                # Логируем прогресс
+                if (i + batch_size) % (batch_size * 10) == 0:
+                    progress = min(100, (i + batch_size) / len(flight_points) * 100)
+                    logger.info(f"Прогресс: {progress:.1f}% ({updated_count} обновлено)")
+
+            logger.info(f"Обновлено записей processed_flights: {updated_count}")
+            return updated_count
+
+        except Error as e:
+            logger.error(f"Ошибка обновления hexagon_id: {e}")
+            self.connection.rollback()
+            return 0
+
     def update_total_flights(self):
         """Обновление поля total_flights для всех полигонов с использованием Python для проверки"""
         try:
@@ -459,7 +614,7 @@ class GridGenerator:
             # Получаем все точки вылета из processed_flights
             logger.info("Загрузка точек вылета из processed_flights...")
             cursor.execute(
-                "SELECT departure_lat, departure_lon FROM processed_flights WHERE departure_lat IS NOT NULL AND departure_lon IS NOT NULL")
+                "SELECT departure_lat, departure_lon FROM processed_flights WHERE departure_lat IS NOT NULL AND departure_lon IS NOT NULL AND prediction='download'")
             flight_points = cursor.fetchall()
             logger.info(f"Загружено {len(flight_points)} точек вылета")
 
@@ -481,8 +636,8 @@ class GridGenerator:
 
                     square_updates.append((count, poly['id']))
 
-                    # Логируем прогресс каждые 100 полигонов
-                    if len(square_updates) % 100 == 0:
+                    # Логируем прогресс каждые 1000 полигонов
+                    if len(square_updates) % 1000 == 0:
                         logger.info(f"Обработано {len(square_updates)} квадратных полигонов")
                         # Пакетное обновление
                         update_cursor = self.connection.cursor()
@@ -565,7 +720,7 @@ class GridGenerator:
         try:
             # Удаляем старые таблицы и создаем новые
             self.drop_grid_tables()
-            self.create_settings_table()
+            # self.create_settings_table()
             self.create_grid_tables()
 
             # Загружаем регионы России
@@ -598,11 +753,17 @@ class GridGenerator:
             self.update_total_flights()
             update_time = time.time() - start_time
 
-            total_time = square_time + hexagon_time + update_time
+            # Обновляем hexagon_id в processed_flights
+            start_time = time.time()
+            updated_flights = self.update_processed_flights_hexagon_id()
+            hexagon_update_time = time.time() - start_time
+
+            total_time = square_time + hexagon_time + update_time + hexagon_update_time
 
             logger.info(f"Создано {square_count} квадратных полигонов за {square_time:.2f} сек")
             logger.info(f"Создано {hexagon_count} шестиугольных полигонов H3 за {hexagon_time:.2f} сек")
             logger.info(f"Обновление total_flights заняло {update_time:.2f} сек")
+            logger.info(f"Обновление hexagon_id для {updated_flights} полетов заняло {hexagon_update_time:.2f} сек")
             logger.info(f"Общее время выполнения: {total_time:.2f} сек")
 
             return True
@@ -614,33 +775,123 @@ class GridGenerator:
             if self.connection:
                 self.connection.close()
 
-    def update_grid_cell_area(self, new_area: float):
-        """Обновление размера ячейки сетки в настройках"""
+    def update_hexagon_ids_only(self):
+        """Обновление только hexagon_id в processed_flights без регенерации сетки"""
         if not self.connect():
             return False
 
         try:
-            cursor = self.connection.cursor()
+            # Проверяем существование таблицы grid_hexagon
+            if not self.check_table_exists('grid_hexagon'):
+                logger.error("Таблица grid_hexagon не существует. Сначала создайте сетку.")
+                return False
 
-            # # Проверяем существование таблицы и столбца
-            self.create_settings_table()
+            # Обновляем hexagon_id
+            updated_count = self.update_processed_flights_hexagon_id()
+            logger.info(f"Обновление hexagon_id завершено. Обновлено записей: {updated_count}")
+            return True
 
-            cursor.execute("""
-                UPDATE settings SET value = %s, updated_at = CURRENT_TIMESTAMP
-                WHERE key_name = 'grid_cell_area'
-            """, (str(new_area),))
+        except Error as e:
+            logger.error(f"Ошибка обновления hexagon_id: {e}")
+            return False
+        finally:
+            if self.connection:
+                self.connection.close()
 
-            if cursor.rowcount == 0:
-                cursor.execute("""
-                    INSERT INTO settings (key_name, value, description)
-                    VALUES ('grid_cell_area', %s, 'Площадь ячейки сетки в км²')
-                """, (str(new_area),))
+    # def update_grid_cell_area(self, new_area: float):
+    #     """Обновление размера ячейки сетки в настройках"""
+    #     if not self.connect():
+    #         return False
+
+    #     try:
+    #         cursor = self.connection.cursor()
+
+    #         # # Проверяем существование таблицы и столбца
+    #         # self.create_settings_table()
+
+    #         # cursor.execute("""
+    #         #     UPDATE settings SET value = %s, updated_at = CURRENT_TIMESTAMP
+    #         #     WHERE key_name = 'grid_cell_area'
+    #         # """, (str(new_area),))
+
+    #         # if cursor.rowcount == 0:
+    #         #     cursor.execute("""
+    #         #         INSERT INTO settings (key_name, value, description)
+    #         #         VALUES ('grid_cell_area', %s, 'Площадь ячейки сетки в км²')
+    #         #     """, (str(new_area),))
+
+    #         self.connection.commit()
+    #         logger.info(f"Размер ячейки сетки обновлен: {new_area} км²")
+    #         return True
+    #     except Error as e:
+    #         logger.error(f"Ошибка обновления размера ячейки: {e}")
+    #         return False
+    #     finally:
+    #         if self.connection:
+    #             self.connection.close()
+
+    def migrate_polygon_v3(self):
+        """Миграция существующих данных для заполнения поля polygon_v3"""
+        if not self.connect():
+            return False
+
+        try:
+            cursor = self.connection.cursor(dictionary=True)
+            
+            # Проверяем существование поля polygon_v3
+            cursor.execute("SHOW COLUMNS FROM grid_hexagon LIKE 'polygon_v3'")
+            if not cursor.fetchone():
+                logger.info("Добавляем поле polygon_v3 в таблицу grid_hexagon...")
+                cursor.execute("ALTER TABLE grid_hexagon ADD COLUMN polygon_v3 LONGTEXT NOT NULL AFTER polygon")
+                self.connection.commit()
+                logger.info("Поле polygon_v3 добавлено")
+
+            # Получаем все записи с пустым polygon_v3
+            cursor.execute("SELECT id, polygon FROM grid_hexagon WHERE polygon_v3 IS NULL OR polygon_v3 = ''")
+            records = cursor.fetchall()
+            
+            if not records:
+                logger.info("Все записи уже имеют заполненное поле polygon_v3")
+                return True
+
+            logger.info(f"Найдено {len(records)} записей для миграции")
+            
+            updated_count = 0
+            for record in records:
+                try:
+                    # Парсим существующий полигон
+                    polygon_data = json.loads(record['polygon'])
+                    polygon_coords = polygon_data[0]  # Берем первый полигон
+                    
+                    # Создаем polygon_v3 с поменянными местами координатами [lon, lat]
+                    polygon_v3_coords = [[coord[1], coord[0]] for coord in polygon_coords]
+                    polygon_v3_json = json.dumps([polygon_v3_coords])
+                    
+                    # Обновляем запись
+                    update_cursor = self.connection.cursor()
+                    update_cursor.execute("""
+                        UPDATE grid_hexagon SET polygon_v3 = %s WHERE id = %s
+                    """, (polygon_v3_json, record['id']))
+                    update_cursor.close()
+                    
+                    updated_count += 1
+                    
+                    # Логируем прогресс каждые 100 записей
+                    if updated_count % 100 == 0:
+                        logger.info(f"Обработано {updated_count} записей")
+                        self.connection.commit()
+                        
+                except Exception as e:
+                    logger.error(f"Ошибка обработки записи {record['id']}: {e}")
+                    continue
 
             self.connection.commit()
-            logger.info(f"Размер ячейки сетки обновлен: {new_area} км²")
+            logger.info(f"Миграция завершена. Обновлено записей: {updated_count}")
             return True
+            
         except Error as e:
-            logger.error(f"Ошибка обновления размера ячейки: {e}")
+            logger.error(f"Ошибка миграции polygon_v3: {e}")
+            self.connection.rollback()
             return False
         finally:
             if self.connection:
@@ -654,9 +905,22 @@ if __name__ == "__main__":
     russia_bbox = (41.0, 19.0, 82.0, 180.0)
 
     # Можно обновить размер ячейки (необязательно)
-    generator.update_grid_cell_area(7500)  # 10000 км²
+    # generator.update_grid_cell_area(10000)  # 10000 км²
 
+    # Полная генерация сеток с обновлением hexagon_id
     if generator.generate_grids(russia_bbox):
-        logger.info("Сетки полигонов успешно созданы")
+        logger.info("Сетки полигонов успешно созданы и hexagon_id обновлены")
     else:
         logger.error("Ошибка при создании сеток")
+
+    # Или только обновление hexagon_id без регенерации сетки
+    # if generator.update_hexagon_ids_only():
+    #     logger.info("hexagon_id успешно обновлены")
+    # else:
+    #     logger.error("Ошибка при обновлении hexagon_id")
+    
+    # Миграция существующих данных для заполнения polygon_v3
+    # if generator.migrate_polygon_v3():
+    #     logger.info("Миграция polygon_v3 завершена")
+    # else:
+    #     logger.error("Ошибка при миграции polygon_v3")

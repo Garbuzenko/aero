@@ -59,10 +59,14 @@ $xc['mod_menu'] = array(
   'docs' => null,
   'presentation' => null,
   'dash-regions' => null,
+  'dash-flights' => null,
   'dash-honeycombs' => null,
   'dash-clusterization' => null,
+  'platforms-bpla' => null,
   'dash-heatmap' => null,
   'dash-infrastructure' => null,
   'dash-aviation' => null,
   'flight-density' => null
 );
+
+$xc['processed_flights'] = 'processed_flights';

@@ -1,4 +1,4 @@
-function jsUploadFilesFunc(html) {
+function jsUploadFilesFunc() {
     $('#processedFiles').html('');
     $('#uploadTerminal').html('');
 }

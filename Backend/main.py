@@ -10,6 +10,7 @@ import time
 import logging
 
 from aircraft.aircraft import Scheduler
+from grid.grid_generator import GridGenerator
 from parser.parser_file import FlightDataProcessor
 from parser.region_stats_updater import update_region_stats_main
 # from aircraft import Scheduler
@@ -48,6 +49,21 @@ def check_and_process_files():
                 processor.process_all_files()
                 # После обработки обновляем статистику регионов
                 update_region_stats_main()
+
+                # ДОБАВЛЯЕМ ЗАПУСК ОБНОВЛЕНИЯ СЕТОК ПОЛИГОНОВ
+                logging.info("Запуск обновления сеток полигонов...")
+                generator = GridGenerator(DB_CONFIG)
+                russia_bbox = (41.0, 19.0, 82.0, 180.0)
+
+
+                if 1==0:
+                    #Отключим
+                    if generator.generate_grids(russia_bbox):
+                        logging.info("✅ Сетки полигонов успешно созданы")
+                    else:
+                        logging.error("❌ Ошибка при создании сеток")
+
+
             else:
                 logging.debug("Нет необработанных файлов.")
 
@@ -70,13 +86,11 @@ def start_aircraft_scheduler():
     opensky_client = OpenSkyClient()
     aircraft_processor = AircraftDataProcessor(db_manager)
     scheduler = Scheduler(db_manager, opensky_client, aircraft_processor)
-    aircraft_thread = scheduler.start_aircraft_data_thread(interval=600)
-    logging.info("Поток сбора данных aircraft запущен (интервал: 600 сек)")
+    aircraft_thread = scheduler.start_aircraft_data_thread(interval=3600)
+    logging.info("Поток сбора данных aircraft запущен (интервал: 3600 сек)")
 
     # Ждём завершения (в реальном приложении можно использовать более гибкую логику)
     aircraft_thread.join()
-
-
 def main():
     """Запускает два фоновых потока."""
     # Поток обработки файлов
@@ -84,8 +98,9 @@ def main():
     file_thread.start()
 
     # Поток обновления данных aircraft
-    aircraft_thread = threading.Thread(target=start_aircraft_scheduler, daemon=True)
-    aircraft_thread.start()
+    if 1==0:
+        aircraft_thread = threading.Thread(target=start_aircraft_scheduler, daemon=True)
+        aircraft_thread.start()
 
     # Основной цикл — чтобы программа не завершалась
     try:

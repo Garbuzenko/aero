@@ -57,6 +57,7 @@ body.dark .modal-content .modal-body a:not(.btn) {
   color: #4361ee;
   font-weight: 600;
 }
+/*
 body.dark .modal-content .modal-body p {
   color: #888ea8;
   letter-spacing: 1px;
@@ -70,6 +71,7 @@ body.dark .modal-content .modal-body p:last-child {
 body.dark .modal-content .modal-body p:not(:last-child) {
   margin-bottom: 10px;
 }
+*/
 body.dark .modal-content .modal-footer {
   border-top: 1px solid #191e3a;
 }

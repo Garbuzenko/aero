@@ -16,7 +16,7 @@
                                 <div class="col-md-12">
                                     <div class="mb-3">
                                         <label class="form-label">Логин</label>
-                                        <input type="text" name="login@" value="admin" class="form-control" />
+                                        <input type="text" name="login@" value="operator" class="form-control" />
                                     </div>
                                 </div>
                                 <div class="col-12">
@@ -54,8 +54,8 @@
                                 <div class="col-sm-12 col-12">
                                     <div class="mb-4">
                                         <p>Так же можно авторизоваться как оператор:<br />
-                                        Логин: <strong style="color: #fff;">operator</strong><br />
-                                        Пароль: <strong style="color: #fff;">aerometr</strong></p>
+                                        Логин: 
+                                        Пароль:
                                     </div>
                                 </div>
                             </div>

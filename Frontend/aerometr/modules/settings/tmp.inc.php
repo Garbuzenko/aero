@@ -42,4 +42,24 @@
 </div>
 <?endif;?>
 
+<div class="col-lg-12 layout-spacing">
+<div class="widget-content widget-content-area">
+  <div class="table-responsive">
+     <form method="post" action="" id="form_jsBackup">
+      <input type="hidden" name="module" value="settings" />
+      <input type="hidden" name="component" value="" />
+      <input type="hidden" name="ajaxLoad" value="jsBackupResult" />
+      <input type="hidden" name="opaco" value="1" />
+      <input type="hidden" name="alert" value="" />
+      <button class="send_form btn btn-primary mt-2" id="jsBackup">Восстановить Бэкап</button>
+    </form>
+
+<div class="mt-2" id="jsBackupResult"></div>
+
+  </div>
+</div>
+
+</div>
+
+
 </div>

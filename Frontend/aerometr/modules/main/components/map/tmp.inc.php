@@ -37,6 +37,7 @@
 <div class="col-md-3 form-group mb-2">
   <label for="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
   <button type="button" class="send_form btn btn-primary btn-lg w-100" id="jsShowMapFilters">Показать</button>
+ 
 </div>
 
 </div>
@@ -45,6 +46,7 @@
 <input type="hidden" name="component" value="map" />
 <input type="hidden" name="ajaxLoad" value="jsAjaxLoadMap" />
 <input type="hidden" name="opaco" value="1" />
+<input type="hidden" name="map_ver" id="jsMapVersion" value="1" />
 <input type="hidden" name="initAnyPlugin" value="initializeDataTable" />
 <input type="hidden" name="alert" value="" />
 </form>

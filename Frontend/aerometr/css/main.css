@@ -42,3 +42,7 @@ body.dark div.dataTables_wrapper div.dataTables_filter input {
 div.dataTables_wrapper div.dataTables_filter input {
     width: 250px !important;
 }
+
+body.dark p {
+    color: #fff;
+}

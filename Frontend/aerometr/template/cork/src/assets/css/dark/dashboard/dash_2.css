@@ -128,6 +128,80 @@ body.dark .widget-two .w-numeric-value .w-numeric-title {
     position: inherit;
   }
 }
+
+
+/*
+	===============================
+			@Import	Function
+	===============================
+*/
+/*
+	===============================
+			@Import	Mixins
+	===============================
+*/
+body.dark .widget-t-sales-widget .media .icon {
+  background: #000;
+  border-radius: 50%;
+  padding: 10px;
+  color: #fff;
+}
+body.dark .widget-t-sales-widget.widget-m-sales .media .icon {
+  background: #805dca;
+  color: #fff;
+}
+body.dark .widget-t-sales-widget.widget-m-orders .media .icon {
+  background: #4361ee;
+  color: #fff;
+}
+body.dark .widget-t-sales-widget.widget-m-customers .media .icon {
+  background: #e7515a;
+  color: #fff;
+}
+body.dark .widget-t-sales-widget.widget-m-income .media .icon {
+  background: #00ab55;
+  color: #fff;
+}
+body.dark .widget-t-sales-widget .media .icon svg {
+  width: 30px;
+  height: 30px;
+  stroke-width: 1.5;
+}
+body.dark .widget-t-sales-widget .media .media-body {
+  align-self: center;
+  text-align: right;
+}
+body.dark .widget-t-sales-widget .media .media-body .widget-text {
+  font-size: 20px;
+  /* text-align: right; */
+  margin-bottom: 0;
+}
+body.dark .widget-t-sales-widget.widget-m-sales .media .media-body .widget-text {
+  color: #805dca;
+}
+body.dark .widget-t-sales-widget.widget-m-orders .media .media-body .widget-text {
+  color: #4361ee;
+}
+body.dark .widget-t-sales-widget.widget-m-customers .media .media-body .widget-text {
+  color: #e7515a;
+}
+body.dark .widget-t-sales-widget.widget-m-income .media .media-body .widget-text {
+  color: #00ab55;
+}
+body.dark .widget-t-sales-widget .widget-numeric-value {
+  /* text-align: center; */
+  font-size: 22px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+body.dark .widget-t-sales-widget .widget-total-stats {
+  margin-bottom: 0;
+  margin-top: 12px;
+  font-size: 15px;
+}
+
+
+
 /*
 	===============================
 			@Import	Function

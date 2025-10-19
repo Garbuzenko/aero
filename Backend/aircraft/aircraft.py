@@ -11,10 +11,17 @@ from shapely.geometry import Point, Polygon, MultiPolygon
 from shapely.prepared import prep
 import rtree
 from functools import lru_cache
+import sys
+import os
+import re
 
-from aircraft.opensky_client import OpenSkyClient
-# from opensky_client import OpenSkyClient
-from aircraft.polygon_processor import PolygonProcessor
+# from aircraft.opensky_client import OpenSkyClient
+from .opensky_client import OpenSkyClient
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+from .polygon_processor import PolygonProcessor
+
 from settings import DB_CONFIG
 
 
@@ -138,7 +145,7 @@ def load_regions():
             conn.close()
 
 
-@lru_cache(maxsize=100000)
+@lru_cache(maxsize=10000)
 def get_region_id(lat, lon):
     """Возвращает идентификатор региона для заданных координат."""
     if lat is None or lon is None:
@@ -163,50 +170,6 @@ def get_region_id(lat, lon):
 class RegionRatingCalculator:
     def __init__(self, db_manager):
         self.db_manager = db_manager
-
-    # def calculate_ratings(self):
-    #     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Расчет рейтинга регионов...")
-    #     connection = self.db_manager.get_connection()
-    #     if not connection:
-    #         print("Не удалось получить соединение с БД")
-    #         return
-    #
-    #     cursor = connection.cursor()
-    #     try:
-    #         # Удаляем старые данные за сегодня
-    #         delete_query = "DELETE FROM raiting"
-    #         if not self.db_manager.safe_execute(cursor, delete_query):
-    #             raise Exception("Не удалось очистить таблицу рейтинга")
-    #
-    #         # Вставляем новые данные
-    #         query = """
-    #         INSERT INTO raiting (region_id, date, total_flights, total_air_time, avg_velocity, avg_heading)
-    #         SELECT
-    #             region_id,
-    #             CURDATE(),
-    #             COUNT(*),
-    #             SUM(TIMESTAMPDIFF(SECOND, timestamp, last_contact)),
-    #             AVG(COALESCE(velocity, 0)),
-    #             AVG(COALESCE(heading, 0))
-    #         FROM aircraft
-    #         WHERE region_id IS NOT NULL AND on_ground = FALSE AND active = 1
-    #         GROUP BY region_id
-    #         """
-    #
-    #         if self.db_manager.safe_execute(cursor, query):
-    #             connection.commit()
-    #             print("Рейтинг регионов успешно рассчитан")
-    #         else:
-    #             print("Ошибка при вставке рейтинга")
-    #             connection.rollback()
-    #
-    #     except Exception as e:
-    #         print(f"Ошибка при расчете рейтинга: {e}")
-    #         connection.rollback()
-    #     finally:
-    #         cursor.close()
-    #         connection.close()
-
 
 class AircraftDataProcessor:
     def __init__(self, db_manager):
@@ -318,7 +281,7 @@ class AircraftDataProcessor:
 
         except Exception as e:
             print(f"Ошибка при вставке данных: {e}")
-            connection.rollback()
+            # connection.rollback()
             return successful_inserts
         finally:
             cursor.close()
@@ -370,7 +333,7 @@ class Scheduler:
 
     def fetch_and_save_aircraft_data(self):
         print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Получение данных о самолетах...")
-        bbox = 0  # РФ
+        bbox = 0  # Весь мир
         simple_data = self.opensky_client.get_all_aircrafts(bbox=bbox)
 
         if simple_data and 'states' in simple_data:

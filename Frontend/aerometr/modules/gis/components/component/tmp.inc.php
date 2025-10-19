@@ -24,43 +24,28 @@
                 </div>
             </div>
             
-            <form method="post" action="" id="form_jsGetQueryApi">
+            <form method="post" action="" id="form_jsGetQueryApi" class="mb-3">
               <input type="hidden" name="module" value="gis" />
               <input type="hidden" name="component" value="component" />
               <input type="hidden" name="api" value="<?=$component;?>" />
+              <input type="hidden" name="callbackFunc" value="jsGetQueryAllApi" />
+              <input type="hidden" name="alert" value="" />
+              <input type="hidden" name="opaco" value="1" />
               <button class="send_form btn btn-primary" id="jsGetQueryApi">
                 Выполнить запрос
               </button>
             </form>
+            
+            <div id="jsResultQuery" class="mt-2 hljs xml hidden" style="max-height: 400px; overflow-y: auto;"></div>
 
         </div>
                                 
                                 
-                                <div class="post-info">
+        <div class="post-info">
                                     
-                                    <hr>
+        <hr>
 
-                                    <div class="post-tags mt-5">
-
-                                        <span class="badge badge-primary mb-2">Admin</span>
-                                        <span class="badge badge-primary mb-2">Themeforeset</span>
-                                        <span class="badge badge-primary mb-2">Dashboard</span>
-                                        <span class="badge badge-primary mb-2">Top 10</span>
-                                        
-                                    </div>
-
-                                    
-                                    <hr>
-
-                                    
-                                    
-                                    
-                                    
-                                </div>
-                                
-                            </div>
-                                
-                            
-                        </div>
-                        
-                    </div>
+      </div>
+    </div>
+  </div>
+</div>

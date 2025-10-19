@@ -16,7 +16,7 @@ $modArr = array(
    'title' => 'Opensky API',
    'breadcrumbs' => 'Opensky API',
    'h1' => 'Открытые данные Самолёты в реальном времени',
-   'descr' => 'тут краткое описание',
+   'descr' => 'OpenSky Network API - это бесплатный API для получения данных о воздушном движении в реальном времени.',
    'baseUrl' => 'https://opensky-network.org/api',
    'query' => 'https://opensky-network.org/api/states/all'
  ),

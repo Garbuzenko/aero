@@ -99,17 +99,6 @@ def is_text_file(file_path):
     if ext in TEXT_EXTENSIONS:
         return True
 
-    # # Быстрая проверка на бинарность: наличие нулевых байтов
-    # try:
-    #     with open(file_path, 'rb') as f:
-    #         chunk = f.read(1024)
-    #     if b'\x00' in chunk:
-    #         return False
-    #     # Попытка декодировать как UTF-8
-    #     chunk.decode('utf-8')
-    #     return True
-    # except (UnicodeDecodeError, OSError, IOError):
-    #     return False
 
 def get_database_schema():
     """Подключается к БД и получает схему всех таблиц"""

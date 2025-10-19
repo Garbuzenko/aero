@@ -22,7 +22,8 @@ if (isset($_POST['form_id']) && $_POST['form_id'] == 'form_signIn') {
         exit($html);
     }
     
-    $hash = get_hash($login);
+    $hash = sha1($login);
+    //$hash = get_hash($login);
    
     $b = db_query("UPDATE users    
     SET hash='" . $hash . "' 

@@ -65,11 +65,17 @@
                             <li class="<?=$xc['mod_menu']['dash-regions'];?>">
                                 <a href="<?=DOMAIN;?>/dash-regions">Регионы</a>
                             </li>
+                            <li class="<?=$xc['mod_menu']['dash-flights'];?>">
+                                <a href="<?=DOMAIN;?>/dash-flights">Полёты</a>
+                            </li>
                             <li class="<?=$xc['mod_menu']['dash-honeycombs'];?>">
                                 <a href="<?=DOMAIN;?>/dash-honeycombs">Гексагоны</a>
                             </li>
                             <li class="<?=$xc['mod_menu']['flight-density'];?>">
                                 <a href="<?=DOMAIN;?>/flight-density">Плотность полётов</a>
+                            </li>
+                            <li class="<?=$xc['mod_menu']['platforms-bpla'];?>">
+                                <a href="<?=DOMAIN;?>/platforms-bpla">Площадки БПЛА</a>
                             </li>
                             <li class="<?=$xc['mod_menu']['dash-clusterization'];?>">
                                 <a href="<?=DOMAIN;?>/dash-clusterization">Кластеризация</a>
