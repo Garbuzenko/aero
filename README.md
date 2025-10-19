@@ -408,27 +408,73 @@ python -c "import flask, pandas, shapely; print('✅ All packages installed')"
 
 #### 4️⃣ База данных
 
+> ⚠️ **Важно:** В папке `DataBase/` находится архив `u3253297_hack.zip` с полным дампом базы данных. Необходимо распаковать архив и импортировать дамп для запуска системы.
+
+**Шаг 4.1: Распаковка архива**
+
 ```bash
-# Создание БД
+# Перейдите в папку DataBase
+cd DataBase
+
+# Распакуйте архив (Linux/macOS)
+unzip u3253297_hack.zip
+
+# Распакуйте архив (Windows PowerShell)
+Expand-Archive -Path u3253297_hack.zip -DestinationPath .
+
+# Или используйте 7-Zip/WinRAR на Windows
+```
+
+**Шаг 4.2: Создание базы данных**
+
+```bash
+# Подключитесь к MySQL
 mysql -u root -p
 
-# В MySQL консоли:
+# В MySQL консоли выполните:
 CREATE DATABASE aerometr CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 exit;
+```
 
-# Импорт схемы
+**Шаг 4.3: Импорт дампа**
+
+```bash
+# Импортируйте распакованный дамп
 mysql -u root -p aerometr < DataBase/u3253297_hack.sql
+
+# Или если файл имеет другое название после распаковки:
+mysql -u root -p aerometr < DataBase/dump.sql
+```
+
+**Шаг 4.4: Проверка импорта**
+
+```bash
+# Подключитесь к БД
+mysql -u root -p aerometr
+
+# Проверьте наличие таблиц:
+SHOW TABLES;
+
+# Должны увидеть таблицы:
+# - processed_flights
+# - regions
+# - aircraft
+# - grid_hexagon
+# - area_bpla
+# и другие...
 ```
 
 ### Конфигурация
 
-#### Создайте `Backend/settings.py`:
+#### 5️⃣ Создайте `Backend/settings.py`:
+
+> ⚠️ **Обязательно:** После импорта базы данных необходимо настроить подключение в файле `Backend/settings.py`
 
 ```python
 # ===== НАСТРОЙКИ БАЗЫ ДАННЫХ =====
 DB_CONFIG = {
-    'user': 'your_username',
-    'password': 'your_password',
+    'user': 'your_username',        # ← Ваш пользователь MySQL
+    'password': 'your_password',    # ← Ваш пароль MySQL (обязательно!)
     'host': 'localhost',
     'port': '3306',
     'database': 'aerometr',
