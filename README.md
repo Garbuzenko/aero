@@ -11,7 +11,7 @@
 [![License](https://img.shields.io/badge/license-Proprietary-red.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-production-success.svg)](https://aerometr.ru)
 
-[🌐 Демо](https://aerometr.ru) • [📊 Презентация](https://aerometr.ru/presentation) • [🏗️ Архитектура](https://aerometr.ru/files/docs/drawio.html) • [📚 Документация](./ТЕХНИЧЕСКАЯ_ДОКУМЕНТАЦИЯ.md) • [🎥 Видео](https://rutube.ru/video/871978b7e0cd45e07e6e0125ee97ec09/)
+[🌐 Демо](https://aerometr.ru) • [📊 Презентация](https://aerometr.ru/presentation) • [🏗️ Архитектура](https://aerometr.ru/files/docs/drawio.html) • [📚 Документация](./ТЕХНИЧЕСКАЯ_ДОКУМЕНТАЦИЯ.md) • [🎥 Видео](https://rutube.ru/video/private/6b444e00317e7986e054958e791480f2)
 
 </div>
 

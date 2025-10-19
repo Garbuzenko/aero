@@ -171,65 +171,12 @@
 
 ### 4.3 Business Processes (Бизнес-процессы)
 
-#### BP-001: Обработка данных о полетах
-
-```
-Входы: Excel файл с FTP
-Выходы: Записи в БД, статистика
-
-Шаги:
-1. Загрузка файла с FTP
-2. Парсинг Excel
-3. Валидация данных
-4. Геопривязка к регионам
-5. Сохранение в БД
-6. Обновление статистики
-7. Генерация отчетов
-```
-
-#### BP-002: Анализ полетной активности
-
-```
-Входы: Данные из БД
-Выходы: Дашборды, отчеты
-
-Шаги:
-1. Выборка данных по фильтрам
-2. Агрегация статистики
-3. Расчет метрик
-4. Генерация визуализаций
-5. Публикация дашбордов
-```
-
-#### BP-003: Планирование размещения площадок
-
-```
-Входы: История полетов, запретные зоны
-Выходы: Список 290 площадок
-
-Шаги:
-1. Анализ трафика по гексагонам
-2. Учет запретных зон
-3. Расчет рейтингов
-4. Оптимизация размещения
-5. Распределение по годам
-6. Сохранение результатов
-```
-
-#### BP-004: Мониторинг в реальном времени
-
-```
-Входы: OpenSky Network API
-Выходы: Актуальные данные о воздушных судах
-
-Шаги:
-1. Запрос данных из OpenSky
-2. Фильтрация по территории РФ
-3. Геопривязка к регионам
-4. Обновление БД
-5. Отображение на карте
-6. Автоочистка устаревших данных
-```
+| ID | Process | Входы | Выходы |
+|----|---------|-------|--------|
+| BP-001 | **Обработка данных о полетах** | Excel файл с FTP | Записи в БД, статистика |
+| BP-002 | **Анализ полетной активности** | Данные из БД | Дашборды, отчеты |
+| BP-003 | **Планирование размещения площадок** | История полетов, запретные зоны | Список 290 площадок |
+| BP-004 | **Мониторинг в реальном времени** | OpenSky Network API | Актуальные данные о судах |
 
 ### 4.4 Business Functions (Бизнес-функции)
 
@@ -567,77 +514,35 @@ Infrastructure:
 
 **Основные информационные сущности:**
 
-```
-Flight (Полет)
-├── ID
-├── Date/Time
-├── Coordinates (start, end)
-├── Duration
-├── Aircraft Type
-├── Operator
-└── Region → references Region
-
-Region (Регион)
-├── ID
-├── Name
-├── Polygon (geometry)
-├── Area (km²)
-└── Statistics → references RegionStats
-
-Hexagon (Гексагон H3)
-├── ID
-├── H3 Index
-├── Center (lat, lon)
-├── Polygon
-├── Flight Count
-└── Region → references Region
-
-BPLAArea (Площадка)
-├── ID
-├── Coordinates
-├── Rating
-├── Year (2026-2030)
-└── Hexagon → references Hexagon
-```
+| Объект | Ключевые атрибуты | Связи |
+|--------|-------------------|-------|
+| **Flight** | ID, Date/Time, Coordinates, Duration, Aircraft Type | → Region |
+| **Region** | ID, Name, Polygon, Area (км²) | → RegionStats |
+| **Hexagon** | ID, H3 Index, Center, Polygon, Flight Count | → Region |
+| **BPLAArea** | ID, Coordinates, Rating, Year (2026-2030) | → Hexagon |
 
 ### 8.6 Service Realization Viewpoint
 
 **Реализация сервиса "Региональная аналитика":**
 
-```
-Business Service: Региональная аналитика
-    ↓ realized by
-Application Service: GET /region_stats
-    ↓ realized by
-Application Component: REST API (Flask)
-    ↓ uses
-Data Object: region_stats
-    ↓ stored in
-Technology Service: MySQL Database
-    ↓ runs on
-Node: Database Server
-```
+| Уровень | Элемент | Тип связи |
+|---------|---------|-----------|
+| Business | Региональная аналитика | ↓ realized by |
+| Application | GET /region_stats API | ↓ realized by |
+| Application | REST API (Flask) | ↓ uses |
+| Data | region_stats (table) | ↓ stored in |
+| Technology | MySQL Database | ↓ runs on |
+| Technology | Database Server | - |
 
 ### 8.7 Layered Viewpoint
 
-**Слоистая архитектура:**
+**Слоистая архитектура ArchiMate:**
 
-```
-┌────────────────────────────────────────────┐
-│          BUSINESS LAYER                     │
-│  Процессы, Функции, Сервисы, Объекты      │
-└────────────────────────────────────────────┘
-                   ↕
-┌────────────────────────────────────────────┐
-│        APPLICATION LAYER                    │
-│  Components, Services, Interfaces, Data    │
-└────────────────────────────────────────────┘
-                   ↕
-┌────────────────────────────────────────────┐
-│        TECHNOLOGY LAYER                     │
-│  Nodes, Software, Networks, Artifacts      │
-└────────────────────────────────────────────┘
-```
+| Слой | Элементы | Связь |
+|------|----------|-------|
+| **BUSINESS** | Процессы, Функции, Сервисы, Объекты | ↕ |
+| **APPLICATION** | Components, Services, Interfaces, Data | ↕ |
+| **TECHNOLOGY** | Nodes, Software, Networks, Artifacts | - |
 
 ### 8.8 Physical Viewpoint
 
@@ -707,150 +612,24 @@ Internet Cloud
 
 ---
 
-## 10. ArchiMate Model Exchange Format
+## 10. Экспорт модели ArchiMate
 
-### 10.1 Open Exchange File Format
+### 10.1 Форматы экспорта
 
-Для импорта в Archi tool, можно использовать следующий XML:
+Модель может быть экспортирована в следующих форматах:
 
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<archimate:model 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:archimate="http://www.archimatetool.com/archimate"
-    name="АЭРОМЕТР"
-    id="aerometr-model"
-    version="4.9.0">
-  
-  <folder name="Strategy" id="strategy-folder" type="strategy">
-    <element 
-        xsi:type="archimate:Resource"
-        name="Финансирование НП БАС" 
-        id="res-001"/>
-    <element 
-        xsi:type="archimate:Capability"
-        name="Обработка больших данных" 
-        id="cap-001"/>
-  </folder>
-  
-  <folder name="Business" id="business-folder" type="business">
-    <element 
-        xsi:type="archimate:BusinessActor"
-        name="Аналитик Росавиации" 
-        id="bac-002"/>
-    <element 
-        xsi:type="archimate:BusinessProcess"
-        name="Обработка данных о полетах" 
-        id="bp-001"/>
-    <element 
-        xsi:type="archimate:BusinessService"
-        name="Региональная аналитика" 
-        id="bsv-001"/>
-    <element 
-        xsi:type="archimate:BusinessObject"
-        name="Полет БПЛА" 
-        id="bob-001"/>
-  </folder>
-  
-  <folder name="Application" id="application-folder" type="application">
-    <element 
-        xsi:type="archimate:ApplicationComponent"
-        name="Parser Module" 
-        id="apc-010"/>
-    <element 
-        xsi:type="archimate:ApplicationComponent"
-        name="REST API" 
-        id="apc-017"/>
-    <element 
-        xsi:type="archimate:ApplicationService"
-        name="Process Files" 
-        id="asv-001"/>
-    <element 
-        xsi:type="archimate:DataObject"
-        name="Flight Record" 
-        id="ado-001"/>
-  </folder>
-  
-  <folder name="Technology" id="technology-folder" type="technology">
-    <element 
-        xsi:type="archimate:Node"
-        name="Application Server" 
-        id="nod-002"/>
-    <element 
-        xsi:type="archimate:SystemSoftware"
-        name="Python 3.8+" 
-        id="sys-002"/>
-    <element 
-        xsi:type="archimate:SystemSoftware"
-        name="MySQL 8.0" 
-        id="sys-004"/>
-    <element 
-        xsi:type="archimate:TechnologyService"
-        name="Database Service" 
-        id="tsv-001"/>
-  </folder>
-  
-  <folder name="Motivation" id="motivation-folder" type="motivation">
-    <element 
-        xsi:type="archimate:Stakeholder"
-        name="Росавиация" 
-        id="stk-001"/>
-    <element 
-        xsi:type="archimate:Driver"
-        name="Национальный проект БАС" 
-        id="drv-001"/>
-    <element 
-        xsi:type="archimate:Goal"
-        name="Автоматизация сбора данных" 
-        id="gol-001"/>
-    <element 
-        xsi:type="archimate:Requirement"
-        name="Парсинг Excel файлов" 
-        id="req-001"/>
-  </folder>
-  
-  <!-- Relationships -->
-  <folder name="Relations" id="relations-folder" type="relations">
-    <element 
-        xsi:type="archimate:RealizationRelationship"
-        source="bp-001" 
-        target="gol-001" 
-        id="rel-001"/>
-    <element 
-        xsi:type="archimate:RealizationRelationship"
-        source="apc-010" 
-        target="bp-001" 
-        id="rel-002"/>
-    <element 
-        xsi:type="archimate:AssignmentRelationship"
-        source="sys-002" 
-        target="apc-010" 
-        id="rel-003"/>
-  </folder>
-  
-</archimate:model>
-```
+- **Open Exchange XML** — стандартный формат ArchiMate
+- **CSV** — для импорта в Archi tool
+- **GRAFICO** — графический формат
+- **ArchiMate Model Exchange File** — для совместимости
 
-### 10.2 CSV Export для Archi Import
+### 10.2 Инструменты для работы
 
-Можно также создать CSV файлы для импорта в Archi:
-
-**elements.csv:**
-```csv
-ID,Type,Name,Documentation
-gol-001,Goal,Автоматизация сбора данных,Автоматический парсинг файлов с FTP и внешних API
-bp-001,Business Process,Обработка данных о полетах,Полный цикл обработки от загрузки до сохранения
-apc-010,Application Component,Parser Module,Модуль парсинга Excel файлов
-sys-002,System Software,Python 3.8+,Runtime для Backend
-```
-
-**relations.csv:**
-```csv
-ID,Type,Source,Target,Name
-rel-001,Realization,bp-001,gol-001,realizes
-rel-002,Realization,apc-010,bp-001,realizes
-rel-003,Assignment,sys-002,apc-010,runs on
-```
+| Инструмент | Назначение | URL |
+|-----------|------------|-----|
+| **Archi** | Открытый редактор ArchiMate | [archimatetool.com](https://www.archimatetool.com/) |
+| **BiZZdesign** | Коммерческий EA tool | [bizzdesign.com](https://bizzdesign.com/) |
+| **SPARX EA** | Enterprise Architect | [sparxsystems.com](https://sparxsystems.com/) |
 
 ---
 
